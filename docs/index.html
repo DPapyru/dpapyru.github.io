@@ -481,49 +481,8 @@
             }
         };
         
-        // 主题领域配置
-        const TOPIC_AREAS = {
-            'env': {
-                title: '环境配置',
-                description: '开发环境搭建和配置',
-                icon: '🛠️'
-            },
-            'mod-basics': {
-                title: 'Mod基础',
-                description: 'Mod开发的基础概念和核心API',
-                icon: '📖'
-            },
-            'items': {
-                title: '物品系统',
-                description: '物品、武器和装备的开发',
-                icon: '⚔️'
-            },
-            'npcs': {
-                title: 'NPC系统',
-                description: 'NPC的创建和行为定制',
-                icon: '👥'
-            },
-            'world-gen': {
-                title: '世界生成',
-                description: '世界生成和地形修改',
-                icon: '🌍'
-            },
-            'ui': {
-                title: 'UI界面',
-                description: '用户界面和交互设计',
-                icon: '🎨'
-            },
-            'networking': {
-                title: '网络功能',
-                description: '多人游戏和网络通信',
-                icon: '🌐'
-            },
-            'advanced': {
-                title: '高级功能',
-                description: '高级开发技巧和优化',
-                icon: '🔧'
-            }
-        };
+        // 主题领域配置 - 将从配置文件动态加载
+        let TOPIC_AREAS = {};
 
         // 页面加载完成后执行
         document.addEventListener('DOMContentLoaded', function() {
@@ -556,6 +515,22 @@
                 if (configResponse.ok) {
                     DOC_CONFIG = await configResponse.json();
                     console.log('成功加载配置文件:', DOC_CONFIG);
+                    
+                    // 从配置文件加载主题领域配置
+                    if (DOC_CONFIG.topics) {
+                        TOPIC_AREAS = {};
+                        Object.keys(DOC_CONFIG.topics).forEach(topicKey => {
+                            const topic = DOC_CONFIG.topics[topicKey];
+                            TOPIC_AREAS[topicKey] = {
+                                title: topic.title,
+                                description: topic.description,
+                                icon: topic.icon || '📄',
+                                display_names: topic.display_names || {},
+                                aliases: topic.aliases || []
+                            };
+                        });
+                        console.log('成功加载主题配置:', TOPIC_AREAS);
+                    }
                 } else {
                     console.warn('配置文件不存在，使用默认配置');
                     DOC_CONFIG = generateDefaultConfig();
@@ -587,11 +562,104 @@
                 };
             });
 
+            // 如果TOPIC_AREAS为空，使用默认主题配置
+            if (Object.keys(TOPIC_AREAS).length === 0) {
+                TOPIC_AREAS = {
+                    'env': {
+                        title: '环境配置',
+                        description: '开发环境搭建和配置',
+                        icon: '🛠️',
+                        display_names: {
+                            "zh": "环境配置",
+                            "en": "Environment Setup"
+                        },
+                        aliases: ["环境配置"]
+                    },
+                    'mod-basics': {
+                        title: 'Mod基础',
+                        description: 'Mod开发的基础概念和核心API',
+                        icon: '📖',
+                        display_names: {
+                            "zh": "Mod基础",
+                            "en": "Mod Basics"
+                        },
+                        aliases: ["Mod基础"]
+                    },
+                    'items': {
+                        title: '物品系统',
+                        description: '物品、武器和装备的开发',
+                        icon: '⚔️',
+                        display_names: {
+                            "zh": "物品系统",
+                            "en": "Item System"
+                        },
+                        aliases: ["物品系统"]
+                    },
+                    'npcs': {
+                        title: 'NPC系统',
+                        description: 'NPC的创建和行为定制',
+                        icon: '👥',
+                        display_names: {
+                            "zh": "NPC系统",
+                            "en": "NPC System"
+                        },
+                        aliases: ["NPC系统"]
+                    },
+                    'world-gen': {
+                        title: '世界生成',
+                        description: '世界生成和地形修改',
+                        icon: '🌍',
+                        display_names: {
+                            "zh": "世界生成",
+                            "en": "World Generation"
+                        },
+                        aliases: ["世界生成"]
+                    },
+                    'ui': {
+                        title: 'UI界面',
+                        description: '用户界面和交互设计',
+                        icon: '🎨',
+                        display_names: {
+                            "zh": "UI界面",
+                            "en": "UI Interface"
+                        },
+                        aliases: ["UI界面"]
+                    },
+                    'networking': {
+                        title: '网络功能',
+                        description: '多人游戏和网络通信',
+                        icon: '🌐',
+                        display_names: {
+                            "zh": "网络功能",
+                            "en": "Networking"
+                        },
+                        aliases: ["网络功能"]
+                    },
+                    'advanced': {
+                        title: '高级功能',
+                        description: '高级开发技巧和优化',
+                        icon: '🔧',
+                        display_names: {
+                            "zh": "高级功能",
+                            "en": "Advanced Features"
+                        },
+                        aliases: ["高级功能"]
+                    }
+                };
+            }
+
             // 初始化主题结构
             Object.keys(TOPIC_AREAS).forEach(topicKey => {
+                const topicArea = TOPIC_AREAS[topicKey];
                 config.topics[topicKey] = {
-                    title: TOPIC_AREAS[topicKey].title,
-                    description: TOPIC_AREAS[topicKey].description
+                    title: topicArea.title,
+                    description: topicArea.description,
+                    icon: topicArea.icon,
+                    display_names: topicArea.display_names || {
+                        "zh": topicArea.title,
+                        "en": topicArea.title
+                    },
+                    aliases: topicArea.aliases || []
                 };
             });
 
@@ -680,6 +748,48 @@
             }
         }
 
+        // 查找主题信息的辅助函数，支持新的配置结构和向后兼容性
+        function findTopicInfo(topicKey) {
+            // 首先尝试直接查找
+            let topic = TOPIC_AREAS[topicKey];
+            if (topic) {
+                return topic;
+            }
+            
+            // 如果直接找不到，尝试通过 aliases 查找
+            Object.keys(TOPIC_AREAS).forEach(key => {
+                const area = TOPIC_AREAS[key];
+                if (area.aliases && area.aliases.includes(topicKey)) {
+                    topic = area;
+                }
+            });
+            
+            // 如果还是找不到，尝试通过旧的 english_key 查找（向后兼容）
+            if (!topic) {
+                Object.keys(TOPIC_AREAS).forEach(key => {
+                    const area = TOPIC_AREAS[key];
+                    if (area.english_key === topicKey) {
+                        topic = area;
+                    }
+                });
+            }
+            
+            return topic;
+        }
+
+        // 获取主题的显示名称，根据当前语言环境
+        function getTopicDisplayName(topic, language = 'zh') {
+            if (!topic) return '';
+            
+            // 如果有 display_names 配置，优先使用
+            if (topic.display_names && topic.display_names[language]) {
+                return topic.display_names[language];
+            }
+            
+            // 否则使用默认的 title
+            return topic.title || '';
+        }
+
         // 使用文档信息更新配置
         function updateConfigWithDocument(docInfo) {
             const { category, topic } = docInfo;
@@ -695,9 +805,13 @@
             
             // 确保主题存在
             if (!DOC_CONFIG.categories[category].topics[topic]) {
+                // 使用新的辅助函数查找主题信息
+                const topicInfo = findTopicInfo(topic);
+                
                 DOC_CONFIG.categories[category].topics[topic] = {
-                    title: TOPIC_AREAS[topic]?.title || topic,
-                    description: TOPIC_AREAS[topic]?.description || '',
+                    title: getTopicDisplayName(topicInfo) || topic,
+                    description: topicInfo?.description || '',
+                    icon: topicInfo?.icon || '📄',
                     files: []
                 };
             }
@@ -799,7 +913,8 @@
                 
                 // 为每个主题创建文档项
                 Object.keys(topicGroups).forEach(topicKey => {
-                    const topic = TOPIC_AREAS[topicKey];
+                    // 使用新的辅助函数查找主题信息
+                    const topic = findTopicInfo(topicKey);
                     const topicDocs = topicGroups[topicKey];
                     
                     topicDocs.forEach(doc => {
@@ -876,13 +991,15 @@
             // 使用 ALL_DOCS 构建搜索索引
             ALL_DOCS.forEach(doc => {
                 const category = MAIN_CATEGORIES[doc.category];
-                const topic = TOPIC_AREAS[doc.topic];
+                
+                // 使用新的辅助函数查找主题信息
+                const topic = findTopicInfo(doc.topic);
                 
                 searchIndex.push({
                     title: doc.title,
                     filename: doc.filename,
                     category: category ? category.title : doc.category,
-                    topic: topic ? topic.title : doc.topic,
+                    topic: getTopicDisplayName(topic) || doc.topic,
                     author: doc.author,
                     description: doc.description,
                     tags: doc.tags ? doc.tags.join(', ') : '',

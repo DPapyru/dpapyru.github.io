@@ -45,6 +45,4 @@ assignees: ''
 ## 📞 其他联系方式
 如果您希望更快得到回复，可以考虑：
 
-- [ ] GitHub Discussions
-- [ ] 泰拉瑞亚Mod开发社区论坛
-- [ ] 相关Discord或QQ群
+- [QQ:960277607] 绿群
