@@ -21,12 +21,37 @@ files.forEach(file => {
     const metadata = parseMetadata(content);
     
     if (metadata.category) {
-        categories[metadata.category].push({
+        // 检查分类是否存在，如果不存在则创建或使用默认分类
+        let targetCategory = metadata.category;
+        
+        // 如果分类不在预定义列表中，尝试映射或使用默认分类
+        if (!categories[targetCategory]) {
+            // 尝试将中文分类映射到英文分类键
+            const categoryMapping = {
+                '入门': 'getting-started',
+                '基础概念': 'basic-concepts',
+                'Mod开发': 'mod-development',
+                '高级主题': 'advanced-topics',
+                '资源参考': 'resources'
+            };
+            
+            targetCategory = categoryMapping[metadata.category] || 'resources';
+            
+            // 如果映射后仍不存在，确保resources分类存在
+            if (!categories[targetCategory]) {
+                categories[targetCategory] = [];
+            }
+        }
+        
+        categories[targetCategory].push({
             file,
             ...metadata
         });
     } else {
         // 如果没有指定类别，默认为resources
+        if (!categories.resources) {
+            categories.resources = [];
+        }
         categories.resources.push({
             file,
             ...metadata
@@ -45,19 +70,27 @@ indexContent += `3. 运行\`node generate-index.js\`脚本自动更新此索引�
 
 // 按类别生成内容
 Object.keys(categories).forEach(category => {
-    if (categories[category].length > 0) {
+    if (categories[category] && categories[category].length > 0) {
         const categoryTitle = getCategoryTitle(category);
         indexContent += `## ${categoryTitle}\n\n`;
         
-        categories[category].sort((a, b) => a.title.localeCompare(b.title));
+        categories[category].sort((a, b) => {
+            // 安全地比较标题，处理可能缺失的标题
+            const titleA = a.title || '';
+            const titleB = b.title || '';
+            return titleA.localeCompare(titleB);
+        });
         
         categories[category].forEach(tutorial => {
-            indexContent += `### [${tutorial.title}](${tutorial.file})\n`;
+            indexContent += `### [${tutorial.title || '无标题'}](${tutorial.file})\n`;
             indexContent += `- **难度**: ${getDifficultyText(tutorial.difficulty)}\n`;
-            indexContent += `- **预计时间**: ${tutorial.time}分钟\n`;
-            indexContent += `- **作者**: ${tutorial.author}\n`;
-            indexContent += `- **更新日期**: ${tutorial.date}\n`;
-            indexContent += `- **描述**: ${tutorial.description}\n\n`;
+            // 检查时间字段是否已经包含"分钟"，避免重复
+            const timeText = tutorial.time || '未知';
+            const timeDisplay = timeText.includes('分钟') ? timeText : `${timeText}分钟`;
+            indexContent += `- **预计时间**: ${timeDisplay}\n`;
+            indexContent += `- **作者**: ${tutorial.author || '未知'}\n`;
+            indexContent += `- **更新日期**: ${tutorial.date || tutorial.last_updated || '未知'}\n`;
+            indexContent += `- **描述**: ${tutorial.description || '无描述'}\n\n`;
         });
     }
 });
@@ -77,20 +110,36 @@ console.log('教程索引已更新！');
 
 // 辅助函数
 function parseMetadata(content) {
-    const metadataMatch = content.match(/^---\n(.*?)\n---/s);
-    if (!metadataMatch) return {};
-    
-    const metadata = {};
-    const lines = metadataMatch[1].split('\n');
-    
-    lines.forEach(line => {
-        const [key, ...valueParts] = line.split(':');
-        if (key && valueParts.length > 0) {
-            metadata[key.trim()] = valueParts.join(':').trim();
+    try {
+        // 移除可能的BOM字符
+        content = content.replace(/^\uFEFF/, '');
+        
+        // 尝试多种正则表达式模式
+        let metadataMatch = content.match(/---\r?\n(.*?)\r?\n---/s);
+        if (!metadataMatch) {
+            metadataMatch = content.match(/^---\s*\n(.*?)\n---/ms);
         }
-    });
-    
-    return metadata;
+        if (!metadataMatch) {
+            return {};
+        }
+        
+        const metadata = {};
+        const lines = metadataMatch[1].split(/\r?\n/);
+        
+        lines.forEach(line => {
+            const colonIndex = line.indexOf(':');
+            if (colonIndex > 0) {
+                const key = line.substring(0, colonIndex).trim();
+                const value = line.substring(colonIndex + 1).trim();
+                metadata[key] = value;
+            }
+        });
+        
+        return metadata;
+    } catch (error) {
+        console.error('解析元数据时出错:', error.message);
+        return {};
+    }
 }
 
 function getCategoryTitle(category) {
@@ -99,7 +148,13 @@ function getCategoryTitle(category) {
         'basic-concepts': '基础概念',
         'mod-development': 'Mod开发',
         'advanced-topics': '高级主题',
-        'resources': '资源参考'
+        'resources': '资源参考',
+        // 直接支持中文分类名称
+        '入门': '入门指南',
+        '基础概念': '基础概念',
+        'Mod开发': 'Mod开发',
+        '高级主题': '高级主题',
+        '资源参考': '资源参考'
     };
     return titles[category] || category;
 }

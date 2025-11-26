@@ -21,14 +21,14 @@ description: 简短描述
 
 3. 运行`node generate-index.js`脚本自动更新此索引文件
 
-## 资源参考
+## 入门指南
 
-### [undefined](test.md)
-- **难度**: undefined
-- **预计时间**: undefined分钟
-- **作者**: undefined
-- **更新日期**: undefined
-- **描述**: undefined
+### [测试文档](test.md)
+- **难度**: 初级
+- **预计时间**: 5分钟
+- **作者**: DPapyru
+- **更新日期**: 2025-11-26
+- **描述**: 用于测试文档查看器功能的示例文档
 
 ---
 
