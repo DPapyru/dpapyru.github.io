@@ -463,7 +463,14 @@ function initMarkdownRenderer() {
             breaks: true,
             gfm: true,
             tables: true,
-            sanitize: false
+            sanitize: false,
+            // 添加这些选项以确保加粗等格式正确渲染
+            smartLists: true,
+            smartypants: true,
+            mangle: true,
+            headerIds: true,
+            xhtml: false,
+            pedantic: false
         });
         console.log('Marked.js配置完成');
     } else {

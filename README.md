@@ -15,6 +15,8 @@
   - 也可以使用http-server:**npx http-server -p 8080**
   - 或者(静态网页):**npx static -p 8080**
 - php使用:**php -S localhost:8080**
+  
+接着运行:node generate-index.js(更新教程索引)
 
 ## 发布
 
