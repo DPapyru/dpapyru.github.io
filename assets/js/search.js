@@ -176,8 +176,13 @@ class TutorialSearch {
             // 显示加载状态
             this.showLoadingState();
             
-            // 获取所有教程文件
-            const tutorialFiles = await this.getTutorialFiles();
+            // 首先尝试从config.json获取文档列表
+            let tutorialFiles = await this.getTutorialFilesFromConfig();
+            
+            // 如果config.json获取失败或为空，使用默认路径
+            if (!tutorialFiles || tutorialFiles.length === 0) {
+                tutorialFiles = await this.getTutorialFiles();
+            }
             
             // 为每个文件创建索引
             for (const file of tutorialFiles) {
@@ -186,11 +191,12 @@ class TutorialSearch {
                     if (!response.ok) continue;
                     
                     const content = await response.text();
-                    const metadata = this.parseMetadata(content);
+                    const fileName = file.split('/').pop();
+                    const metadata = await this.parseMetadataWithConfig(content, fileName);
                     const plainText = this.stripMarkdown(content);
                     
-                    // 更新URL，使其指向viewer.html并加载相应的README.md文件
-                    const viewerUrl = `docs/viewer.html?file=${file.replace('docs/', '')}`;
+                    // 更新URL，使其指向viewer.html并加载相应的文件
+                    const viewerUrl = `docs/viewer.html?file=${fileName}`;
                     
                     this.searchIndex.push({
                         title: metadata.title || this.extractTitle(content),
@@ -199,9 +205,9 @@ class TutorialSearch {
                         description: metadata.description || this.extractDescription(plainText),
                         category: metadata.category || this.getCategoryFromPath(file),
                         difficulty: metadata.difficulty || '未知',
-                        time: metadata.time || '未知',
+                        time: metadata.time || metadata.estimated_time || '未知',
                         author: metadata.author || '未知',
-                        date: metadata.date || '未知'
+                        date: metadata.date || metadata.last_updated || '未知'
                     });
                 } catch (error) {
                     console.warn(`无法加载文件 ${file}:`, error);
@@ -216,20 +222,104 @@ class TutorialSearch {
         }
     }
 
-    // 获取所有教程文件
+    // 从config.json获取所有教程文件
+    async getTutorialFilesFromConfig() {
+        try {
+            const response = await fetch('docs/config.json');
+            if (!response.ok) {
+                throw new Error(`无法加载config.json: ${response.status}`);
+            }
+            const config = await response.json();
+            
+            // 从config.json中提取所有文档文件
+            const documents = [];
+            
+            // 使用all_files数组，这是最直接的文档列表
+            if (config.all_files && Array.isArray(config.all_files)) {
+                config.all_files.forEach(file => {
+                    documents.push(`docs/${file.filename}`);
+                });
+            } else {
+                // 如果all_files不存在，回退到遍历类别和主题
+                Object.values(config.categories).forEach(category => {
+                    Object.values(category.topics).forEach(topic => {
+                        topic.files.forEach(file => {
+                            documents.push(`docs/${file.filename}`);
+                        });
+                    });
+                });
+            }
+            
+            console.log('从config.json获取的文档列表:', documents);
+            return documents;
+        } catch (error) {
+            console.error('获取config.json失败:', error);
+            return []; // 返回空数组，让调用者使用默认路径
+        }
+    }
+
+    // 获取所有教程文件（默认后备方案）
     async getTutorialFiles() {
-        // 返回所有教程文件的路径 - 新的文档结构只包含每个分类目录下的README.md文件
+        // 返回所有教程文件的路径 - 更新为新的扁平化文档结构
         return [
-            'docs/01-入门指南/README.md',
-            'docs/02-基础概念/README.md',
-            'docs/03-内容创建/README.md',
-            'docs/04-高级开发/README.md',
-            'docs/05-专题主题/README.md',
-            'docs/06-资源参考/README.md'
+            'docs/DPapyru-ForNewModder.md',
+            'docs/DPapyru-ForContributors-Basic.md',
+            'docs/TopicSystemGuide.md',
+            'docs/tutorial-index.md'
         ];
     }
 
-    // 解析文件元数据
+    // 解析文件元数据 - 增强版，支持从config.json获取元数据
+    async parseMetadataWithConfig(content, fileName) {
+        let metadata = this.parseMetadata(content);
+        
+        // 尝试从config.json获取更完整的元数据
+        try {
+            const response = await fetch('docs/config.json');
+            if (response.ok) {
+                const config = await response.json();
+                
+                // 在all_files中查找当前文件
+                const fileInfo = config.all_files.find(file => file.filename === fileName);
+                if (fileInfo) {
+                    // 合并config.json中的元数据
+                    metadata = {
+                        ...metadata,
+                        title: fileInfo.title || metadata.title,
+                        author: fileInfo.author || metadata.author,
+                        category: fileInfo.category || metadata.category,
+                        topic: fileInfo.topic || metadata.topic,
+                        order: fileInfo.order || metadata.order
+                    };
+                    
+                    // 从categories中获取更多信息
+                    if (fileInfo.category && config.categories[fileInfo.category]) {
+                        const categoryInfo = config.categories[fileInfo.category];
+                        if (categoryInfo.topics[fileInfo.topic]) {
+                            const topicInfo = categoryInfo.topics[fileInfo.topic];
+                            const fileInTopic = topicInfo.files.find(f => f.filename === fileName);
+                            if (fileInTopic) {
+                                metadata = {
+                                    ...metadata,
+                                    title: fileInTopic.title || metadata.title,
+                                    author: fileInTopic.author || metadata.author,
+                                    description: fileInTopic.description || metadata.description,
+                                    last_updated: fileInTopic.last_updated || metadata.last_updated,
+                                    order: fileInTopic.order || metadata.order
+                                };
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (error) {
+            console.warn('从config.json获取元数据失败:', error);
+        }
+        
+        return metadata;
+    }
+
+    // 解析文件元数据（原始方法）
     parseMetadata(content) {
         const metadataMatch = content.match(/^---\n(.*?)\n---/s);
         if (!metadataMatch) return {};
@@ -454,9 +544,13 @@ class TutorialSearch {
             const score = this.calculateRelevanceScore(item, searchQuery);
             
             if (score > 0) {
+                // 生成匹配片段
+                const snippet = this.generateSnippet(item.content, searchQuery);
+                
                 results.push({
                     ...item,
-                    score
+                    score,
+                    snippet
                 });
             }
         });
@@ -470,8 +564,16 @@ class TutorialSearch {
         // 这是一个简化的查询解析器，支持基本的AND、OR和括号
         // 在实际应用中，可能需要更复杂的解析器
         
+        // 添加调试日志
+        console.log('原始查询:', query);
+        
+        // 处理URL编码的字符
+        query = decodeURIComponent(query);
+        console.log('解码后查询:', query);
+        
         // 移除多余的空格
         query = query.trim().replace(/\s+/g, ' ');
+        console.log('规范化后查询:', query);
         
         // 处理精确匹配（引号包围的短语）
         const exactMatches = [];
@@ -480,9 +582,21 @@ class TutorialSearch {
         while ((match = exactMatchRegex.exec(query)) !== null) {
             exactMatches.push(match[1].toLowerCase());
         }
+        console.log('精确匹配项:', exactMatches);
         
         // 移除精确匹配部分，处理剩余查询
         query = query.replace(/"[^"]+"/g, '').trim();
+        
+        // 处理括号组（先处理括号，因为括号内可能包含AND/OR操作）
+        const bracketGroups = [];
+        const bracketRegex = /\(([^)]+)\)/g;
+        while ((match = bracketRegex.exec(query)) !== null) {
+            bracketGroups.push(match[1].toLowerCase());
+        }
+        console.log('括号组:', bracketGroups);
+        
+        // 移除括号部分
+        query = query.replace(/\([^)]+\)/g, '').trim();
         
         // 处理AND操作（+号）
         const andTerms = [];
@@ -490,22 +604,14 @@ class TutorialSearch {
         while ((match = andTermRegex.exec(query)) !== null) {
             andTerms.push(match[1].toLowerCase());
         }
+        console.log('AND项:', andTerms);
         
         // 移除AND操作部分
         query = query.replace(/\+[^\s+]+/g, '').trim();
         
-        // 处理括号（简化处理，只支持一层括号）
-        const bracketGroups = [];
-        const bracketRegex = /\(([^)]+)\)/g;
-        while ((match = bracketRegex.exec(query)) !== null) {
-            bracketGroups.push(match[1].toLowerCase());
-        }
-        
-        // 移除括号部分
-        query = query.replace(/\([^)]+\)/g, '').trim();
-        
         // 剩余的部分作为OR操作
         const orTerms = query ? query.split(' ').filter(term => term) : [];
+        console.log('OR项:', orTerms);
         
         return {
             exactMatches,
@@ -523,6 +629,14 @@ class TutorialSearch {
         const content = item.content.toLowerCase();
         const description = item.description.toLowerCase();
         const category = item.category.toLowerCase();
+        
+        // 收集所有搜索词
+        const allTerms = [
+            ...searchQuery.exactMatches,
+            ...searchQuery.andTerms,
+            ...searchQuery.orTerms,
+            ...searchQuery.bracketGroups.flatMap(group => group.split(' '))
+        ].filter(term => term.trim() !== '');
         
         // 精确匹配得分最高
         searchQuery.exactMatches.forEach(term => {
@@ -571,13 +685,77 @@ class TutorialSearch {
         // 完全匹配得分更高
         if (title === searchQuery.originalQuery.toLowerCase()) score += 100;
         
+        // 中文搜索优化：如果搜索词是中文，增加对完整匹配的权重
+        allTerms.forEach(term => {
+            if (this.isChinese(term)) {
+                if (title.includes(term)) score += 15;
+                if (content.includes(term)) score += 8;
+                if (description.includes(term)) score += 10;
+            }
+        });
+        
         return score;
     }
 
-    // 从文件路径获取分类
+    // 生成匹配片段
+    generateSnippet(content, searchQuery) {
+        // 收集所有搜索词
+        const allTerms = [
+            ...searchQuery.exactMatches,
+            ...searchQuery.andTerms,
+            ...searchQuery.orTerms,
+            ...searchQuery.bracketGroups.flatMap(group => group.split(' '))
+        ].filter(term => term.trim() !== '');
+        
+        if (allTerms.length === 0) return '';
+        
+        // 查找第一个匹配的位置
+        let firstMatchIndex = -1;
+        let matchedTerm = '';
+        
+        for (const term of allTerms) {
+            const index = content.toLowerCase().indexOf(term.toLowerCase());
+            if (index !== -1 && (firstMatchIndex === -1 || index < firstMatchIndex)) {
+                firstMatchIndex = index;
+                matchedTerm = term;
+            }
+        }
+        
+        if (firstMatchIndex === -1) return '';
+        
+        // 提取片段（前后各50个字符）
+        const start = Math.max(0, firstMatchIndex - 50);
+        const end = Math.min(content.length, firstMatchIndex + matchedTerm.length + 50);
+        let snippet = content.substring(start, end);
+        
+        // 添加省略号
+        if (start > 0) snippet = '...' + snippet;
+        if (end < content.length) snippet = snippet + '...';
+        
+        // 高亮匹配的词
+        snippet = this.highlightText(snippet, matchedTerm);
+        
+        return snippet;
+    }
+
+    // 判断是否为中文字符
+    isChinese(text) {
+        return /[\u4e00-\u9fa5]/.test(text);
+    }
+
+    // 从文件路径获取分类 - 更新为新的扁平化文档结构
     getCategoryFromPath(filePath) {
-        const match = filePath.match(/docs\/([^\/]+)/);
-        return match ? match[1] : '未分类';
+        const fileName = filePath.split('/').pop();
+        
+        // 基于文件名映射到分类
+        const categoryMappings = {
+            'DPapyru-ForNewModder.md': '入门',
+            'DPapyru-ForContributors-Basic.md': '怎么贡献',
+            'TopicSystemGuide.md': '怎么贡献',
+            'tutorial-index.md': '教程索引'
+        };
+        
+        return categoryMappings[fileName] || '未分类';
     }
 
     // 搜索功能（保留原有简单搜索作为后备）
@@ -658,6 +836,7 @@ class TutorialSearch {
             <div class="search-result-item" data-url="${result.url}">
                 <h4 class="search-result-title">${highlightedTitle}</h4>
                 <p class="search-result-description">${highlightedDescription}</p>
+                ${result.snippet ? `<p class="search-result-snippet">${result.snippet}</p>` : ''}
                 <div class="search-result-meta">
                     <span class="search-result-category">${this.getCategoryText(result.category)}</span>
                     <span class="search-result-difficulty ${result.difficulty}">${this.getDifficultyText(result.difficulty)}</span>
@@ -780,10 +959,16 @@ class TutorialSearch {
         }
     }
 
-    // 获取类别文本
+    // 获取类别文本 - 更新为新的扁平化文档结构
     getCategoryText(category) {
         const categories = {
-            '01-入门指南': '入门指南',
+            '入门': '入门',
+            '进阶': '进阶',
+            '高级': '高级',
+            '个人分享': '个人分享',
+            '怎么贡献': '怎么贡献',
+            '教程索引': '教程索引',
+            '01-入门指南': '入门指南', // 保留旧映射以兼容性
             '02-基础概念': '基础概念',
             '03-内容创建': '内容创建',
             '04-高级开发': '高级开发',

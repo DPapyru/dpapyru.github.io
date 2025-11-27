@@ -13,13 +13,13 @@ class NavigationEnhancements {
         this.initMobileNavigation();
     }
 
-    // 初始化面包屑导航
-    initBreadcrumb() {
-        // 检查是否已有面包屑导航
-        if (!document.querySelector('.breadcrumb-nav')) {
-            this.createBreadcrumb();
-        }
-    }
+    // // 初始化面包屑导航
+    // initBreadcrumb() {
+    //     // 检查是否已有面包屑导航
+    //     if (!document.querySelector('.breadcrumb-nav')) {
+    //         this.createBreadcrumb();
+    //     }
+    // }
 
     // 创建面包屑导航
     createBreadcrumb() {
@@ -45,11 +45,18 @@ class NavigationEnhancements {
             if (item.isCurrent) {
                 li.innerHTML = `<span class="breadcrumb-current">${item.text}</span>`;
             } else {
-                // 清理路径
+                // 清理路径并适配新的扁平化结构
                 let cleanUrl = item.url;
                 if (typeof window.cleanPath === 'function') {
                     cleanUrl = window.cleanPath(cleanUrl);
                 }
+                
+                // 如果是Markdown文件，使用viewer.html加载
+                if (cleanUrl.endsWith('.md') && !cleanUrl.includes('viewer.html')) {
+                    const fileName = cleanUrl.split('/').pop();
+                    cleanUrl = `docs/viewer.html?file=${fileName}`;
+                }
+                
                 li.innerHTML = `<a href="${cleanUrl}" class="breadcrumb-link">${item.text}</a>`;
             }
 
@@ -73,7 +80,7 @@ class NavigationEnhancements {
             isCurrent: false
         });
 
-        // 解析路径
+        // 解析路径 - 更新为新的扁平化文档结构
         if (path.includes('/docs/')) {
             items.push({
                 text: '教程',
@@ -90,21 +97,27 @@ class NavigationEnhancements {
                     isCurrent: true
                 });
             }
-        } else if (path.includes('getting-started.md') || path.includes('01-入门指南')) {
+        } else if (path.includes('DPapyru-ForNewModder.md') || path.includes('01-入门指南')) {
             items.push({
                 text: '入门指南',
                 url: '',
                 isCurrent: true
             });
-        } else if (path.includes('basic-concepts.md') || path.includes('02-基础概念')) {
+        } else if (path.includes('DPapyru-ForContributors-Basic.md')) {
             items.push({
-                text: '基础教程',
+                text: '贡献指南',
                 url: '',
                 isCurrent: true
             });
-        } else if (path.includes('intermediate.html')) {
+        } else if (path.includes('TopicSystemGuide.md')) {
             items.push({
-                text: '中级教程',
+                text: '系统指南',
+                url: '',
+                isCurrent: true
+            });
+        } else if (path.includes('tutorial-index.md') || path.includes('02-基础概念')) {
+            items.push({
+                text: '教程索引',
                 url: '',
                 isCurrent: true
             });
@@ -301,16 +314,34 @@ class NavigationEnhancements {
                 
                 // 使用更安全的导航方式，避免直接跳转导致的问题
                 if (tutorialPath.endsWith('.md')) {
-                    // 如果是Markdown文件，使用路由系统加载
-                    console.log(`通过路由系统加载Markdown: ${tutorialPath}`);
-                    if (typeof loadMarkdownContent === 'function') {
-                        loadMarkdownContent(tutorialPath);
-                        history.pushState({}, '', tutorialPath);
-                    } else {
-                        window.location.href = tutorialPath;
-                    }
+                    // 如果是Markdown文件，使用viewer.html加载
+                    console.log(`通过viewer.html加载Markdown: ${tutorialPath}`);
+                    const fileName = tutorialPath.split('/').pop();
+                    const viewerUrl = `docs/viewer.html?file=${fileName}`;
+                    window.location.href = viewerUrl;
                 } else {
                     window.location.href = tutorialPath;
+                }
+            }
+
+            // G 然后 N 跳转到新手指南
+            if (e.key === 'n' && this.gPressed) {
+                e.preventDefault();
+                clearTimeout(this.gTimer);
+                this.gPressed = false;
+                
+                let newPath = 'docs/DPapyru-ForNewModder.md';
+                if (typeof window.cleanPath === 'function') {
+                    newPath = window.cleanPath(newPath);
+                    console.log(`键盘快捷键G+N：清理后的路径: ${newPath}`);
+                }
+                
+                if (newPath.endsWith('.md')) {
+                    const fileName = newPath.split('/').pop();
+                    const viewerUrl = `docs/viewer.html?file=${fileName}`;
+                    window.location.href = viewerUrl;
+                } else {
+                    window.location.href = newPath;
                 }
             }
         });

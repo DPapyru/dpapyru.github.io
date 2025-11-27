@@ -4,15 +4,41 @@
  * 并根据修改时间显示最近的更新
  */
 
-// 文档路径列表
+// 文档路径列表 - 更新为新的扁平化结构
 const DOC_PATHS = [
-    'docs/01-入门指南/README.md',
-    'docs/02-基础概念/README.md',
-    'docs/03-内容创建/README.md',
-    'docs/04-高级开发/README.md',
-    'docs/05-专题主题/README.md',
-    'docs/06-资源参考/README.md'
+    'docs/DPapyru-ForNewModder.md',
+    'docs/DPapyru-ForContributors-Basic.md',
+    'docs/TopicSystemGuide.md',
+    'docs/tutorial-index.md'
 ];
+
+// 从config.json获取文档列表的函数
+async function getDocumentsFromConfig() {
+    try {
+        const response = await fetch('docs/config.json');
+        if (!response.ok) {
+            throw new Error(`无法加载config.json: ${response.status}`);
+        }
+        const config = await response.json();
+
+        // 从config.json中提取所有文档文件
+        const documents = [];
+
+        // 遍历所有类别和主题
+        Object.values(config.categories).forEach(category => {
+            Object.values(category.topics).forEach(topic => {
+                topic.files.forEach(file => {
+                    documents.push(`docs/${file.filename}`);
+                });
+            });
+        });
+
+        return documents;
+    } catch (error) {
+        console.error('获取config.json失败:', error);
+        return DOC_PATHS; // 返回默认路径作为后备
+    }
+}
 
 /**
  * 解析YAML前置元数据
@@ -65,11 +91,11 @@ function fetchDocumentInfo(url) {
             if (!response.ok) {
                 throw new Error(`无法获取文档信息: ${response.status}`);
             }
-            
+
             // 从响应头获取最后修改时间
             const lastModified = response.headers.get('last-modified');
             const lastModifiedDate = lastModified ? new Date(lastModified) : new Date();
-            
+
             // 获取完整文档内容以解析YAML元数据
             return fetch(url)
                 .then(docResponse => {
@@ -86,7 +112,7 @@ function fetchDocumentInfo(url) {
                         description: metadata?.description || '暂无描述',
                         lastUpdated: metadata?.last_updated || lastModifiedDate.toISOString().split('T')[0],
                         difficulty: metadata?.difficulty || '未知',
-                        estimatedTime: metadata?.estimated_time || '未知',
+                        time: metadata?.time || '未知',
                         lastModifiedDate: lastModifiedDate
                     };
                 });
@@ -104,71 +130,56 @@ function fetchDocumentInfo(url) {
  * @returns {object} 备用文档信息
  */
 function getFallbackDocumentInfo(url) {
-    // 根据URL路径推断文档信息
-    const pathParts = url.split('/');
-    const categoryFolder = pathParts[pathParts.length - 2];
-    
-    // 默认文档信息映射
+    // 根据URL路径推断文档信息 - 更新为新的扁平化结构
+    const fileName = url.split('/').pop();
+
+    // 默认文档信息映射 - 基于新的文件名
     const defaultDocs = {
-        '01-入门指南': {
-            title: '入门指南',
+        'DPapyru-ForNewModder.md': {
+            title: '给新人的入门建议',
             description: '适合初学者的基础入门教程，帮助您快速了解项目的基本概念和使用方法',
             difficulty: '初级',
-            estimatedTime: '30分钟',
-            lastUpdated: '2025-11-25'
+            time: '30分钟',
+            lastUpdated: '2025-11-27'
         },
-        '02-基础概念': {
-            title: '基础概念',
-            description: '深入了解项目的核心概念和基本原理，为进一步学习打下坚实基础',
-            difficulty: '初级',
-            estimatedTime: '45分钟',
-            lastUpdated: '2025-11-25'
-        },
-        '03-内容创建': {
-            title: '内容创建',
-            description: '学习如何创建高质量的内容，掌握内容组织和呈现的最佳实践',
+        'DPapyru-ForContributors-Basic.md': {
+            title: '贡献者怎么编写文章？',
+            description: '介绍贡献者应该怎么贡献文章，包括文档编写规范和最佳实践',
             difficulty: '中级',
-            estimatedTime: '60分钟',
-            lastUpdated: '2025-11-25'
+            time: '45分钟',
+            lastUpdated: '2025-11-26'
         },
-        '04-高级开发': {
-            title: '高级开发',
-            description: '深入探讨项目的高级功能和开发技巧，适合有经验的开发人员',
-            difficulty: '高级',
-            estimatedTime: '90分钟',
-            lastUpdated: '2025-11-25'
+        'TopicSystemGuide.md': {
+            title: 'Topic 系统使用指南',
+            description: '详细介绍Topic系统的使用方法和最佳实践，帮助贡献者更好地组织文档',
+            difficulty: '中级',
+            time: '60分钟',
+            lastUpdated: '2025-11-27'
         },
-        '05-专题主题': {
-            title: '专题主题',
-            description: '深入探讨特定领域的应用和解决方案，满足专业化需求',
-            difficulty: '高级',
-            estimatedTime: '75分钟',
-            lastUpdated: '2025-11-25'
-        },
-        '06-资源参考': {
-            title: '资源参考',
-            description: '提供丰富的参考资源，包括工具、文档、示例和社区支持',
+        'tutorial-index.md': {
+            title: '教程索引',
+            description: '提供所有教程的概览和导航，帮助用户快速找到所需内容',
             difficulty: '全部级别',
-            estimatedTime: '30分钟',
-            lastUpdated: '2025-11-25'
+            time: '15分钟',
+            lastUpdated: '2025-11-27'
         }
     };
-    
-    const defaultInfo = defaultDocs[categoryFolder] || {
+
+    const defaultInfo = defaultDocs[fileName] || {
         title: '未知文档',
         description: '暂无描述',
         difficulty: '未知',
-        estimatedTime: '未知',
-        lastUpdated: '2025-11-25'
+        time: '未知',
+        lastUpdated: '2025-11-27'
     };
-    
+
     return {
         url: url,
         title: defaultInfo.title,
         description: defaultInfo.description,
         lastUpdated: defaultInfo.lastUpdated,
         difficulty: defaultInfo.difficulty,
-        estimatedTime: defaultInfo.estimatedTime,
+        time: defaultInfo.time,
         lastModifiedDate: new Date(defaultInfo.lastUpdated)
     };
 }
@@ -211,22 +222,63 @@ function showErrorState(message) {
  * @returns {string} 更新卡片HTML
  */
 function generateUpdateCard(doc) {
-    const difficultyClass = doc.difficulty === '初级' ? 'beginner' : 
-                           doc.difficulty === '中级' ? 'intermediate' : 
-                           doc.difficulty === '高级' ? 'advanced' : 'unknown';
-    
+    let difficultyClass = getDifficultyClass(doc);
+    let difficultyText = getDifficultyText(doc);
+    if (difficultyText === 'unknown')
+        difficultyText = getDifficultyTextFromDocClass(difficultyClass);
+
+    // 为Markdown文件链接添加viewer.html前缀
+    let viewUrl = doc.url;
+    if (viewUrl.endsWith('.md') && !viewUrl.includes('viewer.html')) {
+        const fileName = viewUrl.split('/').pop();
+        viewUrl = `docs/viewer.html?file=${fileName}`;
+    }
+
     return `
         <div class="update-card">
             <div class="update-date">${doc.lastUpdated}</div>
             <div class="update-meta">
-                <span class="difficulty-tag ${difficultyClass}">${doc.difficulty}</span>
-                <span class="estimated-time">⏱️ ${doc.estimatedTime}</span>
+                <span class="difficulty-tag ${difficultyClass}">${difficultyText}</span>
+                <span class="estimated-time">⏱️ ${doc.time}</span>
             </div>
             <h3 class="update-title">${doc.title}</h3>
             <p class="update-description">${doc.description}</p>
-            <a href="${doc.url}" class="update-link">查看详情 →</a>
+            <a href="${viewUrl}" class="update-link">查看详情 →</a>
         </div>
     `;
+}
+
+/**
+ * 获取难度类信息-css类名用
+ */
+function getDifficultyClass(doc) {
+    if (doc.difficulty === 'beginner' || doc.difficulty === 'intermediate' || doc.difficulty === 'advanced')
+        return doc.difficulty;
+    const difficulty = doc.difficulty === '初级' ? 'beginner' :
+        doc.difficulty === '中级' ? 'intermediate' :
+            doc.difficulty === '高级' ? 'advanced' : 'unknown';
+    return difficulty;
+}
+
+/**
+ * 获取难度信息-通过doc
+ */
+function getDifficultyText(doc) {
+    if (doc.difficulty === '初级' || doc.difficulty === '中级' || doc.difficulty === '高级')
+        return doc.difficulty === '初级' ? '初级' :
+            doc.difficulty === 'intermediate' ? '中级' : '高级';
+    return doc.difficulty === 'beginner' ? '初级' :
+        doc.difficulty === 'intermediate' ? '中等' :
+            doc.difficulty === 'advanced' ? '难' : 'unknown';
+}
+
+/**
+ * 如果doc的获取为unknown就会调用这个获取难度信息的
+ */
+function getDifficultyTextFromDocClass(docClass) {
+    return docClass === 'beginner' ? '初级' :
+        docClass === 'intermediate' ? '中等' :
+            docClass === 'advanced' ? '难' : 'unknown';
 }
 
 /**
@@ -235,24 +287,32 @@ function generateUpdateCard(doc) {
 async function loadLatestUpdates() {
     try {
         showLoadingState();
-        
+
+        // 首先尝试从config.json获取文档列表
+        let docPaths = await getDocumentsFromConfig();
+
+        // 如果config.json获取失败或为空，使用默认路径
+        if (!docPaths || docPaths.length === 0) {
+            docPaths = DOC_PATHS;
+        }
+
         // 并行获取所有文档信息
-        const documentPromises = DOC_PATHS.map(path => fetchDocumentInfo(path));
+        const documentPromises = docPaths.map(path => fetchDocumentInfo(path));
         const documents = await Promise.all(documentPromises);
-        
+
         // 过滤出成功加载的文档
         const validDocuments = documents.filter(doc => !doc.error);
-        
+
         // 按最后修改时间排序（最新的在前）
         validDocuments.sort((a, b) => {
             const dateA = new Date(a.lastModifiedDate);
             const dateB = new Date(b.lastModifiedDate);
             return dateB - dateA;
         });
-        
+
         // 取前5个最新文档
         const latestDocuments = validDocuments.slice(0, 5);
-        
+
         // 生成HTML内容
         const updatesGrid = document.querySelector('.updates-grid');
         if (updatesGrid) {
@@ -260,7 +320,7 @@ async function loadLatestUpdates() {
                 showErrorState('没有找到可用的文档');
                 return;
             }
-            
+
             const cardsHtml = latestDocuments.map(doc => generateUpdateCard(doc)).join('');
             updatesGrid.innerHTML = cardsHtml;
         }

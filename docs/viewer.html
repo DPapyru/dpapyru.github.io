@@ -305,6 +305,9 @@
             console.log('当前页面路径:', window.location.pathname);
             console.log('当前搜索参数:', window.location.search);
 
+            // 初始化侧边栏滚动功能
+            initializeSidebarScrolling();
+
             // 初始化文档配置
             initializeDocumentConfig().then(() => {
                 // 初始化分类导航
@@ -399,11 +402,7 @@
         async function scanAllDocuments() {
             console.log('=== scanAllDocuments() 诊断开始 ===');
             try {
-                // 由于Python http.server会自动返回index.html而不是目录列表，
-                // 我们直接使用配置文件中的文档列表，而不是扫描目录
-                console.log('使用配置文件中的文档列表，而不是扫描目录');
-                
-                // 首先尝试加载配置文件
+                // 完全依赖配置文件，因为git上传后会调用generate-index.js生成新的config.json
                 try {
                     const configResponse = await fetch('./config.json');
                     if (configResponse.ok) {
@@ -416,6 +415,20 @@
                         
                         // 如果配置文件中有文档，直接使用
                         if (ALL_DOCS.length > 0) {
+                            // 确保每个文档都有必要的属性
+                            ALL_DOCS = ALL_DOCS.map(doc => ({
+                                ...doc,
+                                title: doc.title || doc.filename.replace('.md', ''),
+                                author: doc.author || '未知',
+                                category: doc.category || '入门',
+                                topic: doc.topic || 'mod-basics',
+                                order: parseInt(doc.order) || 999,
+                                description: doc.description || '',
+                                tags: doc.tags ? (Array.isArray(doc.tags) ? doc.tags : doc.tags.split(',').map(t => t.trim())) : [],
+                                last_updated: doc.last_updated || '未知'
+                            }));
+                            
+                            console.log('处理后的文档列表:', ALL_DOCS);
                             console.log('=== scanAllDocuments() 诊断结束 ===');
                             return;
                         }
@@ -424,19 +437,23 @@
                     console.warn('加载配置文件失败:', configError);
                 }
                 
-                // 如果配置文件加载失败或没有文档，尝试已知的文档列表
-                const knownFiles = ['test.md'];
-                console.log('尝试已知的文档列表:', knownFiles);
+                // 如果配置文件加载失败或没有文档，尝试扫描常见的文档文件
+                console.log('配置文件不可用，尝试扫描常见文档文件');
+                const commonFiles = [
+                    'DPapyru-ForNewModder.md',
+                    'DPapyru-ForContributors-Basic.md',
+                    'TopicSystemGuide.md',
+                    'tutorial-index.md',
+                    'test.md'
+                ];
                 
                 ALL_DOCS = [];
                 
-                for (const filename of knownFiles) {
+                for (const filename of commonFiles) {
                     try {
                         // 获取文档内容和元数据
                         const docUrl = `./${filename}`;
-                        console.log('尝试获取文档内容，URL:', docUrl);
                         const docResponse = await fetch(docUrl);
-                        console.log(`获取文档 ${filename} 响应状态:`, docResponse.status, docResponse.statusText);
                         
                         if (docResponse.ok) {
                             const content = await docResponse.text();
@@ -456,9 +473,6 @@
                             
                             ALL_DOCS.push(docInfo);
                             console.log('成功添加文档:', docInfo.title);
-                            
-                            // 更新配置
-                            updateConfigWithDocument(docInfo);
                         }
                     } catch (error) {
                         console.warn(`无法处理文档 ${filename}:`, error);
@@ -468,7 +482,7 @@
                 // 按分类和排序
                 ALL_DOCS.sort((a, b) => {
                     if (a.category !== b.category) {
-                        return MAIN_CATEGORIES[a.category].order - MAIN_CATEGORIES[b.category].order;
+                        return (MAIN_CATEGORIES[a.category]?.order || 999) - (MAIN_CATEGORIES[b.category]?.order || 999);
                     }
                     return a.order - b.order;
                 });
@@ -747,11 +761,11 @@
             const difficulty = metadata.difficulty || 'beginner';
             const time = metadata.time || '未知';
             const author = metadata.author || '未知';
-            const date = metadata.date || '未知';
+            const last_updated = metadata.last_updated || '未知';
             const prevChapter = metadata.prev_chapter || null;
             const nextChapter = metadata.next_chapter || null;
 
-            console.log('更新页面元数据:', { title, difficulty, time, author, date, prevChapter, nextChapter });
+            console.log('更新页面元数据:', { title, difficulty, time, author, last_updated, prevChapter, nextChapter });
 
             document.title = `${title} - 泰拉瑞亚Mod制作教程`;
             document.getElementById('current-doc-name').textContent = title;
@@ -760,7 +774,7 @@
             document.getElementById('doc-difficulty').className = `difficulty-badge ${difficulty}`;
             document.getElementById('doc-time').textContent = time;
             document.getElementById('doc-author').textContent = author;
-            document.getElementById('doc-date').textContent = date;
+            document.getElementById('doc-date').textContent = last_updated;
             
             // 更新导航按钮
             updateNavigationButtons(prevChapter, nextChapter);
@@ -874,6 +888,25 @@
             console.log('目录生成完成');
         }
 
+        // 检查分类是否有文档
+        function categoryHasDocuments(categoryKey) {
+            if (!DOC_CONFIG || !DOC_CONFIG.categories || !DOC_CONFIG.categories[categoryKey]) {
+                return false;
+            }
+            
+            const categoryTopics = DOC_CONFIG.categories[categoryKey].topics || {};
+            
+            // 检查该分类下是否有任何主题包含文档
+            for (const topicKey in categoryTopics) {
+                const topic = categoryTopics[topicKey];
+                if (topic.files && topic.files.length > 0) {
+                    return true;
+                }
+            }
+            
+            return false;
+        }
+
         // 初始化分类导航
         function initializeCategoryNavigation() {
             const categorySidebar = document.getElementById('category-sidebar');
@@ -890,9 +923,19 @@
                 return;
             }
 
+            // 添加分割线
+            const divider = document.createElement('div');
+            divider.className = 'sidebar-divider';
+            categorySidebar.appendChild(divider);
+
             // 生成分类导航
             Object.keys(MAIN_CATEGORIES).forEach(categoryKey => {
                 const category = MAIN_CATEGORIES[categoryKey];
+                
+                // 检查该分类是否有文档，如果没有则跳过
+                if (!categoryHasDocuments(categoryKey)) {
+                    return; // 跳过空分类
+                }
                 
                 // 创建分类导航项
                 const categoryItem = document.createElement('li');
@@ -915,6 +958,11 @@
                     Object.keys(categoryTopics).forEach(topicKey => {
                         const topic = categoryTopics[topicKey];
                         
+                        // 检查主题是否有文档，如果没有则跳过
+                        if (!topic.files || topic.files.length === 0) {
+                            return; // 跳过空主题
+                        }
+                        
                         // 创建主题标题
                         const topicHeader = document.createElement('h5');
                         topicHeader.className = 'topic-header';
@@ -925,7 +973,9 @@
                         const fileList = document.createElement('ul');
                         fileList.className = 'file-list';
                         
-                        topic.files.forEach(file => {
+                        // 确保topic.files存在且是数组
+                        const files = topic.files || [];
+                        files.forEach(file => {
                             const fileItem = document.createElement('li');
                             fileItem.className = 'file-item';
                             
@@ -940,17 +990,16 @@
                         
                         topicList.appendChild(fileList);
                     });
-                } else {
-                    // 如果没有主题，显示提示信息
-                    const noDocsItem = document.createElement('li');
-                    noDocsItem.className = 'no-docs';
-                    noDocsItem.textContent = '暂无文档';
-                    topicList.appendChild(noDocsItem);
                 }
                 
                 categoryItem.appendChild(topicList);
                 categorySidebar.appendChild(categoryItem);
             });
+            
+            // 添加分割线
+            const allDocsDivider = document.createElement('div');
+            allDocsDivider.className = 'sidebar-divider';
+            categorySidebar.appendChild(allDocsDivider);
             
             // 添加"所有文档"部分
             const allDocsItem = document.createElement('li');
@@ -964,18 +1013,44 @@
             const allDocsList = document.createElement('ul');
             allDocsList.className = 'file-list';
             
-            ALL_DOCS.forEach(doc => {
-                const docItem = document.createElement('li');
-                docItem.className = 'file-item';
+            // 确保ALL_DOCS存在且是数组
+            const allDocs = ALL_DOCS || [];
+            if (allDocs.length === 0) {
+                // 如果没有文档，显示提示信息
+                const noDocsItem = document.createElement('li');
+                noDocsItem.className = 'no-docs';
+                noDocsItem.textContent = '未找到任何文档';
+                allDocsList.appendChild(noDocsItem);
+            } else {
+                // 按分类和排序组织文档
+                const sortedDocs = [...allDocs].sort((a, b) => {
+                    // 先按分类排序
+                    const categoryOrderA = MAIN_CATEGORIES[a.category]?.order || 999;
+                    const categoryOrderB = MAIN_CATEGORIES[b.category]?.order || 999;
+                    if (categoryOrderA !== categoryOrderB) {
+                        return categoryOrderA - categoryOrderB;
+                    }
+                    // 同一分类内按排序值排序
+                    return (a.order || 999) - (b.order || 999);
+                });
                 
-                const docLink = document.createElement('a');
-                docLink.href = `?file=${doc.filename}`;
-                docLink.textContent = doc.title;
-                docLink.title = `${doc.author} - ${doc.description || doc.title}`;
-                
-                docItem.appendChild(docLink);
-                allDocsList.appendChild(docItem);
-            });
+                sortedDocs.forEach(doc => {
+                    const docItem = document.createElement('li');
+                    docItem.className = 'file-item';
+                    
+                    const docLink = document.createElement('a');
+                    docLink.href = `?file=${doc.filename}`;
+                    docLink.textContent = doc.title;
+                    
+                    // 添加更详细的标题信息
+                    const categoryTitle = MAIN_CATEGORIES[doc.category]?.title || doc.category;
+                    const topicTitle = DOC_CONFIG.topics[doc.topic]?.title || doc.topic;
+                    docLink.title = `${doc.author || '未知作者'} - ${doc.description || doc.title} [${categoryTitle} - ${topicTitle}]`;
+                    
+                    docItem.appendChild(docLink);
+                    allDocsList.appendChild(docItem);
+                });
+            }
             
             allDocsItem.appendChild(allDocsList);
             categorySidebar.appendChild(allDocsItem);
@@ -1010,7 +1085,7 @@
             if (!currentCategoryTitle || !currentCategoryDocs) return;
 
             // 等待配置加载完成
-            if (!DOC_CONFIG || ALL_DOCS.length === 0) {
+            if (!DOC_CONFIG || !ALL_DOCS || ALL_DOCS.length === 0) {
                 console.warn('文档配置尚未加载，稍后重试');
                 setTimeout(() => updateCurrentCategoryDocs(filePath), 100);
                 return;
@@ -1024,12 +1099,24 @@
                 currentCategoryTitle.textContent = '所有文档';
                 currentCategoryDocs.innerHTML = '';
                 
-                ALL_DOCS.forEach(doc => {
+                // 按分类和排序组织文档
+                const sortedDocs = [...ALL_DOCS].sort((a, b) => {
+                    // 先按分类排序
+                    const categoryOrderA = MAIN_CATEGORIES[a.category]?.order || 999;
+                    const categoryOrderB = MAIN_CATEGORIES[b.category]?.order || 999;
+                    if (categoryOrderA !== categoryOrderB) {
+                        return categoryOrderA - categoryOrderB;
+                    }
+                    // 同一分类内按排序值排序
+                    return (a.order || 999) - (b.order || 999);
+                });
+                
+                sortedDocs.forEach(doc => {
                     const li = document.createElement('li');
                     const link = document.createElement('a');
                     link.href = `?file=${doc.filename}`;
                     link.textContent = doc.title;
-                    link.title = `${doc.author} - ${doc.description || doc.title}`;
+                    link.title = `${doc.author || '未知作者'} - ${doc.description || doc.title}`;
                     
                     if (doc.filename === filePath) {
                         link.classList.add('active');
@@ -1044,7 +1131,7 @@
 
             // 显示当前文档的分类信息
             const category = MAIN_CATEGORIES[currentDoc.category];
-            const topic = TOPIC_AREAS[currentDoc.topic];
+            const topic = DOC_CONFIG.topics ? DOC_CONFIG.topics[currentDoc.topic] : null;
             
             let titleText = category ? category.title : currentDoc.category;
             if (topic) {
@@ -1059,7 +1146,7 @@
             // 显示同一分类和主题下的其他文档
             const relatedDocs = ALL_DOCS.filter(doc =>
                 doc.category === currentDoc.category && doc.topic === currentDoc.topic
-            ).sort((a, b) => a.order - b.order);
+            ).sort((a, b) => (a.order || 999) - (b.order || 999));
 
             if (relatedDocs.length > 0) {
                 relatedDocs.forEach(doc => {
@@ -1067,7 +1154,7 @@
                     const link = document.createElement('a');
                     link.href = `?file=${doc.filename}`;
                     link.textContent = doc.title;
-                    link.title = `${doc.author} - ${doc.description || doc.title}`;
+                    link.title = `${doc.author || '未知作者'} - ${doc.description || doc.title}`;
                     
                     if (doc.filename === filePath) {
                         link.classList.add('active');
@@ -1080,14 +1167,14 @@
                 // 如果没有相关文档，显示同一分类下的所有文档
                 const categoryDocs = ALL_DOCS.filter(doc =>
                     doc.category === currentDoc.category
-                ).sort((a, b) => a.order - b.order);
+                ).sort((a, b) => (a.order || 999) - (b.order || 999));
                 
                 categoryDocs.forEach(doc => {
                     const li = document.createElement('li');
                     const link = document.createElement('a');
                     link.href = `?file=${doc.filename}`;
                     link.textContent = doc.title;
-                    link.title = `${doc.author} - ${doc.description || doc.title}`;
+                    link.title = `${doc.author || '未知作者'} - ${doc.description || doc.title}`;
                     
                     if (doc.filename === filePath) {
                         link.classList.add('active');
@@ -1130,9 +1217,19 @@
                 
                 mobileNavSections.innerHTML = '';
                 
+                // 添加分割线
+                const divider = document.createElement('div');
+                divider.className = 'mobile-nav-divider';
+                mobileNavSections.appendChild(divider);
+                
                 // 生成分类导航
                 Object.keys(MAIN_CATEGORIES).forEach(categoryKey => {
                     const category = MAIN_CATEGORIES[categoryKey];
+                    
+                    // 检查该分类是否有文档，如果没有则跳过
+                    if (!categoryHasDocuments(categoryKey)) {
+                        return; // 跳过空分类
+                    }
                     
                     // 创建分类容器
                     const categoryDiv = document.createElement('div');
@@ -1150,6 +1247,11 @@
                     if (Object.keys(categoryTopics).length > 0) {
                         Object.keys(categoryTopics).forEach(topicKey => {
                             const topic = categoryTopics[topicKey];
+                            
+                            // 检查主题是否有文档，如果没有则跳过
+                            if (!topic.files || topic.files.length === 0) {
+                                return; // 跳过空主题
+                            }
                             
                             // 创建主题容器
                             const topicDiv = document.createElement('div');
@@ -1194,20 +1296,19 @@
                             topicDiv.appendChild(fileList);
                             categoryDiv.appendChild(topicDiv);
                         });
-                    } else {
-                        // 如果没有主题，显示提示信息
-                        const noDocsItem = document.createElement('div');
-                        noDocsItem.className = 'mobile-file-item';
-                        noDocsItem.textContent = '暂无文档';
-                        categoryDiv.appendChild(noDocsItem);
                     }
                     
                     mobileNavSections.appendChild(categoryDiv);
                 });
                 
+                // 添加分割线
+                const allDocsDivider = document.createElement('div');
+                allDocsDivider.className = 'mobile-nav-divider';
+                mobileNavSections.appendChild(allDocsDivider);
+                
                 // 添加"所有文档"部分
                 const allDocsDiv = document.createElement('div');
-                allDocsDiv.className = 'mobile-category';
+                allDocsDiv.className = 'mobile-category all-docs';
                 
                 const allDocsTitle = document.createElement('div');
                 allDocsTitle.className = 'mobile-category-title';
@@ -1217,31 +1318,57 @@
                 const allDocsList = document.createElement('ul');
                 allDocsList.className = 'mobile-file-list';
                 
-                ALL_DOCS.forEach(doc => {
-                    const docItem = document.createElement('li');
-                    docItem.className = 'mobile-file-item';
-                    
-                    const docLink = document.createElement('a');
-                    docLink.href = `?file=${doc.filename}`;
-                    docLink.className = 'mobile-file-link';
-                    docLink.textContent = doc.title;
-                    docLink.title = `${doc.author} - ${doc.description || doc.title}`;
-                    
-                    // 检查是否为当前文档
-                    const currentUrl = new URL(window.location);
-                    const currentFile = currentUrl.searchParams.get('file') || 'test.md';
-                    if (doc.filename === currentFile) {
-                        docLink.classList.add('active');
-                    }
-                    
-                    // 添加点击事件，点击后关闭导航
-                    docLink.addEventListener('click', function() {
-                        closeMobileNav();
+                // 确保ALL_DOCS存在且是数组
+                const allDocs = ALL_DOCS || [];
+                if (allDocs.length === 0) {
+                    // 如果没有文档，显示提示信息
+                    const noDocsItem = document.createElement('li');
+                    noDocsItem.className = 'mobile-file-item';
+                    noDocsItem.textContent = '未找到任何文档';
+                    allDocsList.appendChild(noDocsItem);
+                } else {
+                    // 按分类和排序组织文档
+                    const sortedDocs = [...allDocs].sort((a, b) => {
+                        // 先按分类排序
+                        const categoryOrderA = MAIN_CATEGORIES[a.category]?.order || 999;
+                        const categoryOrderB = MAIN_CATEGORIES[b.category]?.order || 999;
+                        if (categoryOrderA !== categoryOrderB) {
+                            return categoryOrderA - categoryOrderB;
+                        }
+                        // 同一分类内按排序值排序
+                        return (a.order || 999) - (b.order || 999);
                     });
                     
-                    docItem.appendChild(docLink);
-                    allDocsList.appendChild(docItem);
-                });
+                    sortedDocs.forEach(doc => {
+                        const docItem = document.createElement('li');
+                        docItem.className = 'mobile-file-item';
+                        
+                        const docLink = document.createElement('a');
+                        docLink.href = `?file=${doc.filename}`;
+                        docLink.className = 'mobile-file-link';
+                        docLink.textContent = doc.title;
+                        
+                        // 添加更详细的标题信息
+                        const categoryTitle = MAIN_CATEGORIES[doc.category]?.title || doc.category;
+                        const topicTitle = DOC_CONFIG.topics && DOC_CONFIG.topics[doc.topic] ? DOC_CONFIG.topics[doc.topic].title : doc.topic;
+                        docLink.title = `${doc.author || '未知作者'} - ${doc.description || doc.title} [${categoryTitle} - ${topicTitle}]`;
+                        
+                        // 检查是否为当前文档
+                        const currentUrl = new URL(window.location);
+                        const currentFile = currentUrl.searchParams.get('file') || 'test.md';
+                        if (doc.filename === currentFile) {
+                            docLink.classList.add('active');
+                        }
+                        
+                        // 添加点击事件，点击后关闭导航
+                        docLink.addEventListener('click', function() {
+                            closeMobileNav();
+                        });
+                        
+                        docItem.appendChild(docLink);
+                        allDocsList.appendChild(docItem);
+                    });
+                }
                 
                 allDocsDiv.appendChild(allDocsList);
                 mobileNavSections.appendChild(allDocsDiv);
@@ -1284,6 +1411,154 @@
             
             // 监听窗口大小变化
             window.addEventListener('resize', updateMobileNavVisibility);
+        }
+        
+        // 初始化侧边栏滚动功能
+        function initializeSidebarScrolling() {
+            const sidebar = document.querySelector('.sidebar');
+            if (!sidebar) return;
+            
+            let isScrolling = false;
+            let scrollTimeout;
+            
+            // 滚动事件处理
+            sidebar.addEventListener('scroll', function() {
+                if (!isScrolling) {
+                    sidebar.classList.add('scrolling');
+                    isScrolling = true;
+                }
+                
+                // 清除之前的超时
+                clearTimeout(scrollTimeout);
+                
+                // 设置新的超时，在停止滚动后移除类
+                scrollTimeout = setTimeout(function() {
+                    sidebar.classList.remove('scrolling');
+                    isScrolling = false;
+                }, 150);
+            });
+            
+            // 为侧边栏内的链接添加平滑滚动效果
+            const sidebarLinks = sidebar.querySelectorAll('a[href^="#"]');
+            sidebarLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const targetId = this.getAttribute('href').substring(1);
+                    const targetElement = document.getElementById(targetId);
+                    
+                    if (targetElement) {
+                        // 计算滚动位置，考虑固定头部高度
+                        const headerHeight = document.querySelector('.site-header').offsetHeight;
+                        const targetPosition = targetElement.offsetTop - headerHeight - 20;
+                        
+                        window.scrollTo({
+                            top: targetPosition,
+                            behavior: 'smooth'
+                        });
+                    }
+                });
+            });
+            
+            // 添加键盘导航支持
+            sidebar.addEventListener('keydown', function(e) {
+                // 上下箭头键滚动
+                if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    sidebar.scrollTop -= 30;
+                } else if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    sidebar.scrollTop += 30;
+                }
+                // Home键滚动到顶部
+                else if (e.key === 'Home') {
+                    e.preventDefault();
+                    sidebar.scrollTop = 0;
+                }
+                // End键滚动到底部
+                else if (e.key === 'End') {
+                    e.preventDefault();
+                    sidebar.scrollTop = sidebar.scrollHeight;
+                }
+            });
+            
+            // 确保侧边栏可以获得焦点以支持键盘导航
+            sidebar.setAttribute('tabindex', '0');
+            
+            // 添加滚动指示器（可选）
+            addScrollIndicator(sidebar);
+        }
+        
+        // 添加滚动指示器
+        function addScrollIndicator(sidebar) {
+            // 检查是否需要滚动指示器
+            function checkScrollNeeded() {
+                const needsScroll = sidebar.scrollHeight > sidebar.clientHeight;
+                
+                // 如果需要滚动且没有指示器，则添加一个
+                if (needsScroll && !sidebar.querySelector('.scroll-indicator')) {
+                    const indicator = document.createElement('div');
+                    indicator.className = 'scroll-indicator';
+                    indicator.innerHTML = '↓';
+                    indicator.style.cssText = `
+                        position: absolute;
+                        bottom: 10px;
+                        right: 10px;
+                        background: rgba(0, 123, 255, 0.7);
+                        color: white;
+                        width: 24px;
+                        height: 24px;
+                        border-radius: 50%;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-size: 12px;
+                        opacity: 0.7;
+                        pointer-events: none;
+                        transition: opacity 0.3s ease;
+                        z-index: 10;
+                    `;
+                    
+                    // 将指示器添加到侧边栏内容区域
+                    const sidebarContent = sidebar.querySelector('.sidebar-content');
+                    if (sidebarContent) {
+                        sidebarContent.style.position = 'relative';
+                        sidebarContent.appendChild(indicator);
+                        
+                        // 监听滚动，当用户开始滚动时隐藏指示器
+                        let hideTimeout;
+                        sidebar.addEventListener('scroll', function() {
+                            indicator.style.opacity = '0';
+                            
+                            // 清除之前的超时
+                            clearTimeout(hideTimeout);
+                            
+                            // 如果滚动到顶部，重新显示指示器
+                            if (sidebar.scrollTop <= 10) {
+                                hideTimeout = setTimeout(() => {
+                                    indicator.style.opacity = '0.7';
+                                }, 1000);
+                            }
+                        });
+                    }
+                }
+                // 如果不需要滚动且有指示器，则移除它
+                else if (!needsScroll) {
+                    const indicator = sidebar.querySelector('.scroll-indicator');
+                    if (indicator) {
+                        indicator.remove();
+                    }
+                }
+            }
+            
+            // 初始检查
+            checkScrollNeeded();
+            
+            // 窗口大小变化时重新检查
+            window.addEventListener('resize', checkScrollNeeded);
+            
+            // 内容变化时重新检查（使用MutationObserver）
+            const observer = new MutationObserver(checkScrollNeeded);
+            observer.observe(sidebar, { childList: true, subtree: true });
         }
     </script>
 </body>

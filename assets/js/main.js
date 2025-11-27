@@ -294,18 +294,13 @@ function initRouter() {
     const isExplicitHtml = currentPath.endsWith('.html') || currentPath.includes('.html?');
     console.log(`是否为明确HTML页面: ${isExplicitHtml}`);
 
-    // 检查是否为需要加载Markdown的页面 - 使用更精确的判断条件
+    // 检查是否为需要加载Markdown的页面 - 更新为新的扁平化文档结构
     const isMarkdownPage = currentPath.includes('/docs/') && !currentPath.includes('.html') ||
         currentPath.endsWith('.md') ||
         (currentPath.includes('tutorial-index') && !currentPath.includes('.html')) ||
-        (currentPath.includes('getting-started') && !currentPath.includes('.html')) ||
-        (currentPath.includes('basic-concepts') && !currentPath.includes('.html')) ||
-        (currentPath.includes('01-入门指南') && !currentPath.includes('.html')) ||
-        (currentPath.includes('02-基础概念') && !currentPath.includes('.html')) ||
-        (currentPath.includes('03-内容创建') && !currentPath.includes('.html')) ||
-        (currentPath.includes('04-高级开发') && !currentPath.includes('.html')) ||
-        (currentPath.includes('05-专题主题') && !currentPath.includes('.html')) ||
-        (currentPath.includes('06-资源参考') && !currentPath.includes('.html'));
+        (currentPath.includes('DPapyru-ForNewModder') && !currentPath.includes('.html')) ||
+        (currentPath.includes('DPapyru-ForContributors-Basic') && !currentPath.includes('.html')) ||
+        (currentPath.includes('TopicSystemGuide') && !currentPath.includes('.html'));
 
     // 只有在不是HTML页面的情况下才考虑加载Markdown内容
     const isDocsPage = !isExplicitHtml && isMarkdownPage;
@@ -384,9 +379,9 @@ function initRouter() {
         const markdownContent = document.getElementById('markdown-content');
         if (markdownContent && window.location.pathname.includes('docs/')) {
             console.log('检测到docs页面但没有触发Markdown加载，尝试手动加载...');
-            // 尝试加载默认的getting-started.md
+            // 尝试加载默认的tutorial-index.md
             setTimeout(() => {
-                loadMarkdownContent('docs/getting-started.md');
+                loadMarkdownContent('docs/tutorial-index.md');
             }, 100);
         }
     }
@@ -434,10 +429,10 @@ function initRouter() {
         const currentPath = window.location.pathname;
         console.log(`浏览器前进后退，当前路径: ${currentPath}`);
 
-        // 使用增强的路径检测逻辑
+        // 使用增强的路径检测逻辑 - 更新为新的文档结构
         const isDocsPage = currentPath.includes('/docs/') || currentPath.includes('.md') ||
-            currentPath.includes('tutorial-index') || currentPath.includes('getting-started') ||
-            currentPath.includes('basic-concepts');
+            currentPath.includes('tutorial-index') || currentPath.includes('DPapyru-ForNewModder') ||
+            currentPath.includes('DPapyru-ForContributors-Basic') || currentPath.includes('TopicSystemGuide');
 
         if (isDocsPage) {
             // 处理路径，确保使用正确的相对路径
@@ -534,6 +529,27 @@ function cleanPath(path) {
         return path;
     }
 
+    // 新的扁平化结构处理：如果路径包含旧的结构，尝试映射到新结构
+    const oldStructureMappings = {
+        '01-入门指南/README.md': 'DPapyru-ForNewModder.md',
+        '02-基础概念/README.md': 'tutorial-index.md',
+        '03-内容创建/README.md': 'tutorial-index.md',
+        '04-高级开发/README.md': 'tutorial-index.md',
+        '05-专题主题/README.md': 'tutorial-index.md',
+        '06-资源参考/README.md': 'tutorial-index.md',
+        'getting-started.md': 'DPapyru-ForNewModder.md',
+        'basic-concepts.md': 'tutorial-index.md'
+    };
+
+    // 检查是否需要映射旧路径到新路径
+    for (const [oldPath, newPath] of Object.entries(oldStructureMappings)) {
+        if (path.includes(oldPath)) {
+            path = path.replace(oldPath, newPath);
+            console.log(`映射旧路径到新路径: ${oldPath} -> ${newPath}`);
+            break;
+        }
+    }
+
     // 确保以.md结尾（如果不是目录路径）
     if (!path.endsWith('/') && !path.endsWith('.md')) {
         path += '.md';
@@ -567,7 +583,7 @@ function tryFallbackPaths(originalPath) {
         return;
     }
 
-    // 定义可能的备用路径列表
+    // 定义可能的备用路径列表 - 更新为新的扁平化结构
     const fallbackPaths = [
         originalPath,
         `docs/${originalPath}`,
@@ -575,6 +591,26 @@ function tryFallbackPaths(originalPath) {
         originalPath.replace(/^docs\//, ''),
         originalPath.replace(/\.md$/, '') + '.md'
     ];
+
+    // 添加旧结构到新结构的映射作为备用路径
+    const oldToNewMappings = {
+        'docs/01-入门指南/README.md': 'docs/DPapyru-ForNewModder.md',
+        'docs/02-基础概念/README.md': 'docs/tutorial-index.md',
+        'docs/03-内容创建/README.md': 'docs/tutorial-index.md',
+        'docs/04-高级开发/README.md': 'docs/tutorial-index.md',
+        'docs/05-专题主题/README.md': 'docs/tutorial-index.md',
+        'docs/06-资源参考/README.md': 'docs/tutorial-index.md',
+        'docs/getting-started.md': 'docs/DPapyru-ForNewModder.md',
+        'docs/basic-concepts.md': 'docs/tutorial-index.md'
+    };
+
+    // 检查原始路径是否匹配旧结构，如果是则添加新结构路径作为备用
+    for (const [oldPath, newPath] of Object.entries(oldToNewMappings)) {
+        if (originalPath.includes(oldPath) || originalPath.includes(oldPath.replace('docs/', ''))) {
+            fallbackPaths.push(newPath);
+            break;
+        }
+    }
 
     // 去除重复路径
     const uniquePaths = [...new Set(fallbackPaths)];
@@ -976,14 +1012,9 @@ window.addEventListener('load', function () {
         currentPath.includes('/docs/') ||
         currentPath.endsWith('.md') ||
         currentPath.includes('tutorial-index') ||
-        currentPath.includes('getting-started') ||
-        currentPath.includes('basic-concepts') ||
-        currentPath.includes('01-入门指南') ||
-        currentPath.includes('02-基础概念') ||
-        currentPath.includes('03-内容创建') ||
-        currentPath.includes('04-高级开发') ||
-        currentPath.includes('05-专题主题') ||
-        currentPath.includes('06-资源参考')
+        currentPath.includes('DPapyru-ForNewModder') ||
+        currentPath.includes('DPapyru-ForContributors-Basic') ||
+        currentPath.includes('TopicSystemGuide')
     );
 
     console.log(`页面加载检查 - 是否为HTML页面: ${isExplicitHtml}`);
