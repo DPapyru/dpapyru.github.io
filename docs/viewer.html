@@ -716,8 +716,10 @@
             const time = metadata.time || '未知';
             const author = metadata.author || '未知';
             const date = metadata.date || '未知';
+            const prevChapter = metadata.prev_chapter || null;
+            const nextChapter = metadata.next_chapter || null;
 
-            console.log('更新页面元数据:', { title, difficulty, time, author, date });
+            console.log('更新页面元数据:', { title, difficulty, time, author, date, prevChapter, nextChapter });
 
             document.title = `${title} - 泰拉瑞亚Mod制作教程`;
             document.getElementById('current-doc-name').textContent = title;
@@ -727,6 +729,48 @@
             document.getElementById('doc-time').textContent = time;
             document.getElementById('doc-author').textContent = author;
             document.getElementById('doc-date').textContent = date;
+            
+            // 更新导航按钮
+            updateNavigationButtons(prevChapter, nextChapter);
+        }
+
+        // 更新导航按钮
+        function updateNavigationButtons(prevChapter, nextChapter) {
+            const navigationContainer = document.querySelector('.tutorial-navigation');
+            if (!navigationContainer) {
+                console.warn('找不到导航容器');
+                return;
+            }
+
+            // 清空现有导航内容
+            navigationContainer.innerHTML = '';
+
+            // 添加返回文档列表按钮
+            const backToListBtn = document.createElement('a');
+            backToListBtn.href = '../docs/';
+            backToListBtn.className = 'btn btn-outline prev-tutorial';
+            backToListBtn.textContent = '← 返回文档列表';
+            navigationContainer.appendChild(backToListBtn);
+
+            // 添加上一章按钮（如果存在）
+            if (prevChapter) {
+                const prevBtn = document.createElement('a');
+                prevBtn.href = `?file=${prevChapter}`;
+                prevBtn.className = 'btn btn-secondary prev-tutorial';
+                prevBtn.textContent = '← 上一章';
+                navigationContainer.appendChild(prevBtn);
+            }
+
+            // 添加下一章按钮（如果存在）
+            if (nextChapter) {
+                const nextBtn = document.createElement('a');
+                nextBtn.href = `?file=${nextChapter}`;
+                nextBtn.className = 'btn btn-primary next-tutorial';
+                nextBtn.textContent = '下一章 →';
+                navigationContainer.appendChild(nextBtn);
+            }
+
+            console.log('导航按钮已更新:', { prevChapter, nextChapter });
         }
 
         // 将难度代码转换为中文文本

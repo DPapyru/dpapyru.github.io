@@ -1,6 +1,6 @@
 ---
 title: 测试文档
-author: DPapyru
+author: 小天使
 category: 入门
 topic: mod-basics
 order: 1
@@ -9,6 +9,8 @@ time: 5分钟
 description: 用于测试文档查看器功能的示例文档
 tags: ["测试", "入门", "基础"]
 last_updated: 2025-11-26
+prev_chapter: null
+next_chapter: test-navigation.md
 ---
 
 # 测试文档

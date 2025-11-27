@@ -1,3 +1,18 @@
+---
+title: Topic 系统使用指南
+author: 小天使
+category: 个人分享
+topic: advanced
+order: 1
+difficulty: advanced
+time: 30分钟
+description: 详细介绍Topic系统的使用方法和最佳实践
+tags: ["Topic系统", "配置", "最佳实践"]
+last_updated: 2025-11-27
+prev_chapter: test-navigation.md
+next_chapter: null
+---
+
 # Topic 系统使用指南
 
 ## 概述

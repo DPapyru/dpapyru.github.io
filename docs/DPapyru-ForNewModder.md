@@ -1,6 +1,6 @@
 ---
 title: 给新人的入门教学
-author: DPapyru
+author: 小天使
 category: 入门
 topic: mod-basics
 order: 1
