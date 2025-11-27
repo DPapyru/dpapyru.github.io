@@ -9,7 +9,8 @@
           "description": "Mod开发的基础概念和核心API",
           "files": [
             {
-              "filename": "DPapyru-ForNewModder.md",
+              "filename": "DPapyru-给新人的前言.md",
+              "path": "Modder入门/DPapyru-给新人的前言.md",
               "title": "给新人的入门建议",
               "author": "小天使",
               "order": 1,
@@ -67,7 +68,8 @@
           "description": "Mod开发的基础概念和核心API",
           "files": [
             {
-              "filename": "DPapyru-ForContributors-Basic.md",
+              "filename": "DPapyru-贡献者如何编写文章基础.md",
+              "path": "给贡献者阅读的文章/DPapyru-贡献者如何编写文章基础.md",
               "title": "贡献者怎么编写文章？",
               "author": "小天使",
               "order": 1,
@@ -81,8 +83,9 @@
           "description": "高级开发技巧和优化",
           "files": [
             {
-              "filename": "TopicSystemGuide.md",
-              "title": "Topic 系统使用指南",
+              "filename": "TopicSystem使用指南.md",
+              "path": "给贡献者阅读的文章/TopicSystem使用指南.md",
+              "title": "Topic系统使用指南",
               "author": "小天使",
               "order": 1,
               "description": "详细介绍Topic系统的使用方法和最佳实践",
@@ -195,23 +198,16 @@
     "小天使": {
       "name": "小天使",
       "files": [
-        "DPapyru-ForNewModder.md",
-        "TopicSystemGuide.md",
-        "DPapyru-ForContributors-Basic.md"
+        "DPapyru-给新人的前言.md",
+        "DPapyru-贡献者如何编写文章基础.md",
+        "TopicSystem使用指南.md"
       ]
     }
   },
   "all_files": [
     {
-      "filename": "DPapyru-ForContributors-Basic.md",
-      "title": "贡献者怎么编写文章？",
-      "author": "小天使",
-      "category": "怎么贡献",
-      "topic": "mod-basics",
-      "order": 1
-    },
-    {
-      "filename": "DPapyru-ForNewModder.md",
+      "filename": "DPapyru-给新人的前言.md",
+      "path": "Modder入门/DPapyru-给新人的前言.md",
       "title": "给新人的入门建议",
       "author": "小天使",
       "category": "入门",
@@ -219,8 +215,18 @@
       "order": 1
     },
     {
-      "filename": "TopicSystemGuide.md",
-      "title": "Topic 系统使用指南",
+      "filename": "DPapyru-贡献者如何编写文章基础.md",
+      "path": "给贡献者阅读的文章/DPapyru-贡献者如何编写文章基础.md",
+      "title": "贡献者怎么编写文章？",
+      "author": "小天使",
+      "category": "怎么贡献",
+      "topic": "mod-basics",
+      "order": 1
+    },
+    {
+      "filename": "TopicSystem使用指南.md",
+      "path": "给贡献者阅读的文章/TopicSystem使用指南.md",
+      "title": "Topic系统使用指南",
       "author": "小天使",
       "category": "怎么贡献",
       "topic": "advanced",

@@ -961,7 +961,7 @@
                         
                         const docLink = document.createElement('a');
                         docLink.className = 'doc-link';
-                        docLink.href = `viewer.html?file=${doc.filename}`;
+                        docLink.href = `viewer.html?file=${doc.path || doc.filename}`;
                         docLink.title = `${doc.author} - ${doc.description || doc.title}`;
                         
                         const difficultyClass = doc.difficulty === 'all' ? 'beginner' : doc.difficulty;
@@ -1124,7 +1124,7 @@
                         `;
                         
                         resultItem.addEventListener('click', function() {
-                            window.location.href = `viewer.html?file=${result.filename}`;
+                            window.location.href = `viewer.html?file=${result.path || result.filename}`;
                         });
                         
                         searchResults.appendChild(resultItem);
@@ -1223,7 +1223,7 @@
                         // 查找入门分类的第一个文档
                         const beginnerDoc = ALL_DOCS.find(doc => doc.category === '入门');
                         if (beginnerDoc) {
-                            buttonLink = `viewer.html?file=${beginnerDoc.filename}`;
+                            buttonLink = `viewer.html?file=${beginnerDoc.path || beginnerDoc.filename}`;
                         }
                         break;
                     case 'api-reference':
@@ -1232,7 +1232,7 @@
                             doc.category === '高级' || doc.category === '进阶'
                         );
                         if (apiDoc) {
-                            buttonLink = `viewer.html?file=${apiDoc.filename}`;
+                            buttonLink = `viewer.html?file=${apiDoc.path || apiDoc.filename}`;
                         }
                         break;
                     case 'community':

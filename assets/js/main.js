@@ -162,7 +162,7 @@ function filterTutorials() {
     const difficultyFilter = document.getElementById('difficulty-filter');
     const timeFilter = document.getElementById('time-filter');
     const tutorialItems = document.querySelectorAll('.tutorial-item');
-    
+
     // 获取当前选择的筛选条件
     const selectedDifficulty = difficultyFilter ? difficultyFilter.value : 'all';
     const selectedTime = timeFilter ? timeFilter.value : 'all';
@@ -170,7 +170,7 @@ function filterTutorials() {
     // 遍历所有教程项目，根据筛选条件决定显示或隐藏
     tutorialItems.forEach(item => {
         let showItem = true;
-        
+
         // 检查难度筛选条件
         if (selectedDifficulty !== 'all') {
             const difficultyBadge = item.querySelector('.difficulty-badge');
@@ -224,26 +224,26 @@ function updateActiveNavOnScroll() {
     // 获取所有内容区域和侧边栏锚点链接
     const sections = document.querySelectorAll('.content-section, .category-section');
     const sidebarLinks = document.querySelectorAll('.sidebar-list a[href^="#"]');
-    
+
     // 如果没有内容区域或链接，直接返回
     if (sections.length === 0 || sidebarLinks.length === 0) return;
-    
+
     // 获取当前滚动位置（添加偏移量以提前触发状态变化）
     const scrollPosition = window.scrollY + 100; // 添加一些偏移量
 
     let currentSection = '';
-    
+
     // 遍历所有内容区域，找出当前滚动位置对应的区域
     sections.forEach(section => {
         const sectionTop = section.offsetTop;
         const sectionHeight = section.offsetHeight;
-        
+
         // 判断当前滚动位置是否在某个内容区域内
         if (scrollPosition >= sectionTop && scrollPosition < sectionTop + sectionHeight) {
             currentSection = section.getAttribute('id');
         }
     });
-    
+
     // 更新导航链接的活动状态
     sidebarLinks.forEach(link => {
         link.classList.remove('active');
@@ -374,7 +374,7 @@ function initRouter() {
             });
     } else {
         console.log('当前页面不是Markdown页面，跳过加载');
-        
+
         // 检查特殊情况：有markdown-content元素但没有加载内容
         const markdownContent = document.getElementById('markdown-content');
         if (markdownContent && window.location.pathname.includes('docs/')) {
@@ -392,7 +392,7 @@ function initRouter() {
         if (link && link.href && link.getAttribute('href').endsWith('.md')) {
             e.preventDefault();
             let href = link.getAttribute('href');
-            
+
             // 将Markdown文件链接重定向到viewer.html页面
             if (!href.includes('viewer.html')) {
                 const fileName = href.split('/').pop();
@@ -464,7 +464,6 @@ function initMarkdownRenderer() {
             gfm: true,
             tables: true,
             sanitize: false,
-            // 添加这些选项以确保加粗等格式正确渲染
             smartLists: true,
             smartypants: true,
             mangle: true,
@@ -500,7 +499,7 @@ function cleanPath(path) {
     console.log(`原始路径: "${path}"`);
 
     const originalPath = path; // 保存原始路径用于日志
-    
+
     // 移除开头的斜杠，确保使用相对路径
     if (path.startsWith('/')) {
         path = path.substring(1);
@@ -557,6 +556,15 @@ function cleanPath(path) {
         }
     }
 
+    // 如果是文件名且没有路径分隔符，尝试在全局文档列表中查找完整路径
+    if (!path.includes('/') && typeof window.ALL_DOCS !== 'undefined' && window.ALL_DOCS.length > 0) {
+        const doc = window.ALL_DOCS.find(d => d.filename === path || d.path === path);
+        if (doc && doc.path) {
+            path = doc.path;
+            console.log(`通过文档列表找到完整路径: ${path}`);
+        }
+    }
+
     // 确保以.md结尾（如果不是目录路径）
     if (!path.endsWith('/') && !path.endsWith('.md')) {
         path += '.md';
@@ -598,6 +606,15 @@ function tryFallbackPaths(originalPath) {
         originalPath.replace(/^docs\//, ''),
         originalPath.replace(/\.md$/, '') + '.md'
     ];
+
+    // 如果是文件名，尝试在全局文档列表中查找完整路径
+    if (!originalPath.includes('/') && typeof window.ALL_DOCS !== 'undefined' && window.ALL_DOCS.length > 0) {
+        const doc = window.ALL_DOCS.find(d => d.filename === originalPath || d.path === originalPath);
+        if (doc && doc.path) {
+            fallbackPaths.unshift(doc.path);
+            console.log(`添加文档列表中的路径作为备用: ${doc.path}`);
+        }
+    }
 
     // 添加旧结构到新结构的映射作为备用路径
     const oldToNewMappings = {
@@ -698,7 +715,7 @@ function loadMarkdownContent(filePath) {
     const markdownContent = document.getElementById('markdown-content');
     const tableOfContents = document.getElementById('table-of-contents');
     const defaultContent = document.getElementById('default-content');
-    
+
     // 防止重复的docs路径问题
     if (filePath.startsWith('docs/docs/')) {
         filePath = filePath.replace('docs/docs/', 'docs/');
@@ -728,7 +745,7 @@ function loadMarkdownContent(filePath) {
             console.log(`fetch响应时间: ${fetchTime}ms`);
             console.log(`获取文件响应状态: ${response.status} ${response.statusText}`);
             console.log(`响应头: ${JSON.stringify(Object.fromEntries(response.headers.entries()))}`);
-            
+
             // 检查响应状态，如果不是200则抛出错误
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status} ${response.statusText}`);
@@ -747,7 +764,7 @@ function loadMarkdownContent(filePath) {
                     const renderedHTML = marked.parse(markdownText);
                     console.log('Markdown渲染成功');
                     markdownContent.innerHTML = renderedHTML;
-                    
+
                     // 为新渲染的内容应用代码语法高亮
                     if (typeof Prism !== 'undefined') {
                         console.log('正在应用代码高亮...');
@@ -881,7 +898,7 @@ function updatePageTitle(contentElement) {
         const title = firstHeading.textContent;
         // 更新浏览器标题栏
         document.title = `${title} - 泰拉瑞亚Mod制作教程`;
-        
+
         // 更新面包屑导航中的当前页面名称
         const breadcrumbCurrent = document.querySelector('.breadcrumb .current');
         if (breadcrumbCurrent) {
@@ -907,10 +924,10 @@ function updateSidebarNavigation(contentElement) {
     // 获取h2和h3级别的标题作为导航项
     const headings = contentElement.querySelectorAll('h2, h3');
     const sidebarList = document.querySelector('.sidebar-list');
-    
+
     // 如果没有侧边栏或标题，直接返回
     if (!sidebarList || headings.length === 0) return;
-    
+
     // 清空现有侧边栏导航内容
     sidebarList.innerHTML = '';
 
@@ -1041,7 +1058,7 @@ window.addEventListener('load', function () {
 
             if (contentLength === 0 || contentTrimmed === '') {
                 console.log('=== 检测到页面刷新但内容未加载，开始重新加载 ===');
-                
+
                 // 从当前URL推断需要加载的文件路径
                 let filePath = currentPath;
                 console.log(`从URL推断的初始文件路径: ${filePath}`);
@@ -1122,6 +1139,15 @@ function initSearchResultClickEvents() {
                 if (url.endsWith('.md')) {
                     e.preventDefault();
 
+                    // 如果是文件名，尝试在文档列表中查找完整路径
+                    if (!url.includes('/') && typeof window.ALL_DOCS !== 'undefined' && window.ALL_DOCS.length > 0) {
+                        const doc = window.ALL_DOCS.find(d => d.filename === url.split('/').pop() || d.path === url);
+                        if (doc && doc.path) {
+                            url = doc.path;
+                            console.log(`搜索结果中找到完整路径: ${url}`);
+                        }
+                    }
+
                     // 隐藏搜索结果面板
                     const searchResults = document.getElementById('search-results');
                     if (searchResults) {
@@ -1170,7 +1196,7 @@ if (typeof originalLoadMarkdownContent === 'function') {
                         // 解析文件元数据和纯文本内容
                         const metadata = window.tutorialSearch.parseMetadata(content);
                         const plainText = window.tutorialSearch.stripMarkdown(content);
-                        
+
                         // 将文件信息添加到搜索索引
                         window.tutorialSearch.searchIndex.push({
                             title: metadata.title || window.tutorialSearch.extractTitle(content),

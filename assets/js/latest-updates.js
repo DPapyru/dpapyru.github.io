@@ -6,9 +6,9 @@
 
 // 文档路径列表 - 更新为新的扁平化结构
 const DOC_PATHS = [
-    'docs/DPapyru-ForNewModder.md',
-    'docs/DPapyru-ForContributors-Basic.md',
-    'docs/TopicSystemGuide.md',
+    'docs/Modder入门/DPapyru-给新人的前言.md',
+    'docs/给贡献者阅读的文章/DPapyru-贡献者如何编写文章基础.md',
+    'docs/给贡献者阅读的文章/TopicSystem使用指南.md',
     'docs/tutorial-index.md'
 ];
 
@@ -24,14 +24,12 @@ async function getDocumentsFromConfig() {
         // 从config.json中提取所有文档文件
         const documents = [];
 
-        // 遍历所有类别和主题
-        Object.values(config.categories).forEach(category => {
-            Object.values(category.topics).forEach(topic => {
-                topic.files.forEach(file => {
-                    documents.push(`docs/${file.filename}`);
-                });
+        // 直接使用config.all_files数组
+        if (config.all_files && Array.isArray(config.all_files)) {
+            config.all_files.forEach(file => {
+                documents.push(`docs/${file.path}`);
             });
-        });
+        }
 
         return documents;
     } catch (error) {
@@ -135,23 +133,23 @@ function getFallbackDocumentInfo(url) {
 
     // 默认文档信息映射 - 基于新的文件名
     const defaultDocs = {
-        'DPapyru-ForNewModder.md': {
+        'DPapyru-给新人的前言.md': {
             title: '给新人的入门建议',
-            description: '适合初学者的基础入门教程，帮助您快速了解项目的基本概念和使用方法',
+            description: '给新人的入门建议',
             difficulty: '初级',
             time: '30分钟',
             lastUpdated: '2025-11-27'
         },
-        'DPapyru-ForContributors-Basic.md': {
+        'DPapyru-贡献者如何编写文章基础.md': {
             title: '贡献者怎么编写文章？',
-            description: '介绍贡献者应该怎么贡献文章，包括文档编写规范和最佳实践',
+            description: '用于测试文档查看器功能的示例文档',
             difficulty: '中级',
             time: '45分钟',
-            lastUpdated: '2025-11-26'
+            lastUpdated: '2025-11-27'
         },
-        'TopicSystemGuide.md': {
+        'TopicSystem使用指南.md': {
             title: 'Topic 系统使用指南',
-            description: '详细介绍Topic系统的使用方法和最佳实践，帮助贡献者更好地组织文档',
+            description: '详细介绍Topic系统的使用方法和最佳实践',
             difficulty: '中级',
             time: '60分钟',
             lastUpdated: '2025-11-27'

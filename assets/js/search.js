@@ -192,11 +192,18 @@ class TutorialSearch {
                     
                     const content = await response.text();
                     const fileName = file.split('/').pop();
-                    const metadata = await this.parseMetadataWithConfig(content, fileName);
+                    const metadata = await this.parseMetadataWithConfig(content, fileName, file);
                     const plainText = this.stripMarkdown(content);
                     
+                    // 获取相对于docs目录的路径
+                    let relativePath = file;
+                    if (file.startsWith('docs/')) {
+                        relativePath = file.substring(5);
+                    }
+                    
                     // 更新URL，使其指向viewer.html并加载相应的文件
-                    const viewerUrl = `docs/viewer.html?file=${fileName}`;
+                    // 使用完整路径，包括子目录
+                    const viewerUrl = `docs/viewer.html?file=${encodeURIComponent(relativePath)}`;
                     
                     this.searchIndex.push({
                         title: metadata.title || this.extractTitle(content),
@@ -207,7 +214,8 @@ class TutorialSearch {
                         difficulty: metadata.difficulty || '未知',
                         time: metadata.time || metadata.estimated_time || '未知',
                         author: metadata.author || '未知',
-                        date: metadata.date || metadata.last_updated || '未知'
+                        date: metadata.date || metadata.last_updated || '未知',
+                        filePath: file // 保存完整文件路径用于后续匹配
                     });
                 } catch (error) {
                     console.warn(`无法加载文件 ${file}:`, error);
@@ -233,20 +241,53 @@ class TutorialSearch {
             
             // 从config.json中提取所有文档文件
             const documents = [];
+            const processedFiles = new Set(); // 使用Set来避免重复文件
             
-            // 使用all_files数组，这是最直接的文档列表
+            // 直接使用all_files数组，这是最直接的文档列表
             if (config.all_files && Array.isArray(config.all_files)) {
                 config.all_files.forEach(file => {
-                    documents.push(`docs/${file.filename}`);
+                    // 使用完整的路径，包括子目录
+                    if (file.path) {
+                        const fullPath = `docs/${file.path}`;
+                        if (!processedFiles.has(fullPath)) {
+                            documents.push(fullPath);
+                            processedFiles.add(fullPath);
+                        }
+                    } else {
+                        // 如果没有path字段，回退到filename
+                        const fullPath = `docs/${file.filename}`;
+                        if (!processedFiles.has(fullPath)) {
+                            documents.push(fullPath);
+                            processedFiles.add(fullPath);
+                        }
+                    }
                 });
-            } else {
-                // 如果all_files不存在，回退到遍历类别和主题
+            }
+            
+            // 同时也遍历类别和主题，以确保不遗漏任何文件
+            if (config.categories) {
                 Object.values(config.categories).forEach(category => {
-                    Object.values(category.topics).forEach(topic => {
-                        topic.files.forEach(file => {
-                            documents.push(`docs/${file.filename}`);
+                    if (category.topics) {
+                        Object.values(category.topics).forEach(topic => {
+                            if (topic.files && Array.isArray(topic.files)) {
+                                topic.files.forEach(file => {
+                                    if (file.path) {
+                                        const fullPath = `docs/${file.path}`;
+                                        if (!processedFiles.has(fullPath)) {
+                                            documents.push(fullPath);
+                                            processedFiles.add(fullPath);
+                                        }
+                                    } else if (file.filename) {
+                                        const fullPath = `docs/${file.filename}`;
+                                        if (!processedFiles.has(fullPath)) {
+                                            documents.push(fullPath);
+                                            processedFiles.add(fullPath);
+                                        }
+                                    }
+                                });
+                            }
                         });
-                    });
+                    }
                 });
             }
             
@@ -260,17 +301,17 @@ class TutorialSearch {
 
     // 获取所有教程文件（默认后备方案）
     async getTutorialFiles() {
-        // 返回所有教程文件的路径 - 更新为新的扁平化文档结构
+        // 返回所有教程文件的路径 - 更新为新的嵌套文档结构
         return [
-            'docs/DPapyru-ForNewModder.md',
-            'docs/DPapyru-ForContributors-Basic.md',
-            'docs/TopicSystemGuide.md',
+            'docs/Modder入门/DPapyru-给新人的前言.md',
+            'docs/给贡献者阅读的文章/DPapyru-贡献者如何编写文章基础.md',
+            'docs/给贡献者阅读的文章/TopicSystem使用指南.md',
             'docs/tutorial-index.md'
         ];
     }
 
     // 解析文件元数据 - 增强版，支持从config.json获取元数据
-    async parseMetadataWithConfig(content, fileName) {
+    async parseMetadataWithConfig(content, fileName, fullPath) {
         let metadata = this.parseMetadata(content);
         
         // 尝试从config.json获取更完整的元数据
@@ -279,8 +320,15 @@ class TutorialSearch {
             if (response.ok) {
                 const config = await response.json();
                 
-                // 在all_files中查找当前文件
-                const fileInfo = config.all_files.find(file => file.filename === fileName);
+                // 在all_files中查找当前文件，先尝试完整路径匹配，再尝试文件名匹配
+                let fileInfo = config.all_files.find(file => file.path === fullPath || file.filename === fileName);
+                
+                // 如果没找到，尝试只使用文件名部分进行匹配
+                if (!fileInfo) {
+                    const fileNameOnly = fileName.split('/').pop();
+                    fileInfo = config.all_files.find(file => file.filename === fileNameOnly);
+                }
+                
                 if (fileInfo) {
                     // 合并config.json中的元数据
                     metadata = {
@@ -289,7 +337,8 @@ class TutorialSearch {
                         author: fileInfo.author || metadata.author,
                         category: fileInfo.category || metadata.category,
                         topic: fileInfo.topic || metadata.topic,
-                        order: fileInfo.order || metadata.order
+                        order: fileInfo.order || metadata.order,
+                        path: fileInfo.path || fullPath
                     };
                     
                     // 从categories中获取更多信息
@@ -297,7 +346,11 @@ class TutorialSearch {
                         const categoryInfo = config.categories[fileInfo.category];
                         if (categoryInfo.topics[fileInfo.topic]) {
                             const topicInfo = categoryInfo.topics[fileInfo.topic];
-                            const fileInTopic = topicInfo.files.find(f => f.filename === fileName);
+                            const fileInTopic = topicInfo.files.find(f =>
+                                f.filename === fileName ||
+                                f.path === fullPath ||
+                                f.filename === fileName.split('/').pop()
+                            );
                             if (fileInTopic) {
                                 metadata = {
                                     ...metadata,
@@ -305,7 +358,8 @@ class TutorialSearch {
                                     author: fileInTopic.author || metadata.author,
                                     description: fileInTopic.description || metadata.description,
                                     last_updated: fileInTopic.last_updated || metadata.last_updated,
-                                    order: fileInTopic.order || metadata.order
+                                    order: fileInTopic.order || metadata.order,
+                                    path: fileInTopic.path || metadata.path
                                 };
                             }
                         }
@@ -743,15 +797,15 @@ class TutorialSearch {
         return /[\u4e00-\u9fa5]/.test(text);
     }
 
-    // 从文件路径获取分类 - 更新为新的扁平化文档结构
+    // 从文件路径获取分类 - 更新为新的嵌套文档结构
     getCategoryFromPath(filePath) {
         const fileName = filePath.split('/').pop();
         
         // 基于文件名映射到分类
         const categoryMappings = {
-            'DPapyru-ForNewModder.md': '入门',
-            'DPapyru-ForContributors-Basic.md': '怎么贡献',
-            'TopicSystemGuide.md': '怎么贡献',
+            'DPapyru-给新人的前言.md': '入门',
+            'DPapyru-贡献者如何编写文章基础.md': '怎么贡献',
+            'TopicSystem使用指南.md': '怎么贡献',
             'tutorial-index.md': '教程索引'
         };
         
@@ -959,7 +1013,7 @@ class TutorialSearch {
         }
     }
 
-    // 获取类别文本 - 更新为新的扁平化文档结构
+    // 获取类别文本 - 更新为新的嵌套文档结构
     getCategoryText(category) {
         const categories = {
             '入门': '入门',

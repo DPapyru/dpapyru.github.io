@@ -4,7 +4,29 @@ const path = require('path');
 
 // 读取所有Markdown文件
 const docsDir = './docs';
-const files = fs.readdirSync(docsDir).filter(file => file.endsWith('.md') && file !== 'tutorial-index.md');
+
+// 递归扫描目录获取所有Markdown文件
+function scanDirectoryRecursively(dir, fileList = []) {
+  const items = fs.readdirSync(dir);
+  
+  items.forEach(item => {
+    const fullPath = path.join(dir, item);
+    const stat = fs.statSync(fullPath);
+    
+    if (stat.isDirectory()) {
+      // 递归扫描子目录
+      scanDirectoryRecursively(fullPath, fileList);
+    } else if (item.endsWith('.md') && item !== 'tutorial-index.md') {
+      // 计算相对于docs目录的路径，确保使用正斜杠
+      const relativePath = path.relative(docsDir, fullPath).replace(/\\/g, '/');
+      fileList.push(relativePath);
+    }
+  });
+  
+  return fileList;
+}
+
+const files = scanDirectoryRecursively(docsDir);
 
 // 读取现有的config.json文件（如果存在）
 let configData = {};
@@ -44,7 +66,8 @@ const categories = {
 
 // 解析每个文件的元数据
 files.forEach(file => {
-    const content = fs.readFileSync(path.join(docsDir, file), 'utf8');
+    const fullPath = path.join(docsDir, file);
+    const content = fs.readFileSync(fullPath, 'utf8');
     const metadata = parseMetadata(content);
     
     // 跳过标记为 hide: true 的文件
@@ -77,6 +100,7 @@ files.forEach(file => {
 
         categories[targetCategory].push({
             file,
+            path: file, // 添加完整路径
             ...metadata
         });
     } else {
@@ -86,6 +110,7 @@ files.forEach(file => {
         }
         categories.resources.push({
             file,
+            path: file, // 添加完整路径
             ...metadata
         });
     }
@@ -114,7 +139,7 @@ Object.keys(categories).forEach(category => {
         });
 
         categories[category].forEach(tutorial => {
-            indexContent += `### [${tutorial.title || '无标题'}](${tutorial.file})\n`;
+            indexContent += `### [${tutorial.title || '无标题'}](${tutorial.path || tutorial.file})\n`;
             indexContent += `- **难度**: ${getDifficultyText(tutorial.difficulty)}\n`;
             // 检查时间字段是否已经包含"分钟"，避免重复
             const timeText = tutorial.time || '未知';
@@ -209,8 +234,8 @@ function getDifficultyText(difficulty) {
 
 // 更新config.json数据的函数
 function updateConfigData() {
-    // 获取当前docs目录中所有实际存在的Markdown文件
-    const currentFiles = fs.readdirSync(docsDir).filter(file => file.endsWith('.md') && file !== 'tutorial-index.md');
+    // 获取当前docs目录中所有实际存在的Markdown文件（包括子目录）
+    const currentFiles = scanDirectoryRecursively(docsDir);
     const existingFiles = new Set(currentFiles);
     
     // 创建文件到正确类别的映射表
@@ -221,7 +246,8 @@ function updateConfigData() {
     // 首先解析所有文件的元数据，确定每个文件应该属于哪个类别
     currentFiles.forEach(file => {
         try {
-            const content = fs.readFileSync(path.join(docsDir, file), 'utf8');
+            const fullPath = path.join(docsDir, file);
+            const content = fs.readFileSync(fullPath, 'utf8');
             const metadata = parseMetadata(content);
             
             // 检查是否为隐藏文件
@@ -428,7 +454,8 @@ function updateConfigData() {
 
     // 处理每个文件
     files.forEach(file => {
-        const content = fs.readFileSync(path.join(docsDir, file), 'utf8');
+        const fullPath = path.join(docsDir, file);
+        const content = fs.readFileSync(fullPath, 'utf8');
         const metadata = parseMetadata(content);
         
         // 跳过隐藏文件
@@ -484,8 +511,9 @@ function updateConfigData() {
 
         // 创建文件对象
         const fileObj = {
-            filename: file,
-            title: metadata.title || file.replace('.md', ''),
+            filename: path.basename(file), // 仅文件名，向后兼容
+            path: file, // 完整相对路径
+            title: metadata.title || path.basename(file, '.md'),
             author: metadata.author || '未知',
             order: parseInt(metadata.order) || 999,
             description: metadata.description || '无描述',
@@ -494,7 +522,7 @@ function updateConfigData() {
 
         // 检查文件是否已存在于主题的文件列表中
         const existingFileIndex = configData.categories[category].topics[topic].files.findIndex(
-            f => f.filename === file
+            f => f.filename === path.basename(file) || f.path === file
         );
 
         if (existingFileIndex >= 0) {
@@ -510,8 +538,9 @@ function updateConfigData() {
 
         // 添加到all_files
         configData.all_files.push({
-            filename: file,
-            title: metadata.title || file.replace('.md', ''),
+            filename: path.basename(file), // 仅文件名，向后兼容
+            path: file, // 完整相对路径
+            title: metadata.title || path.basename(file, '.md'),
             author: metadata.author || '未知',
             category: category,
             topic: topic,
@@ -528,14 +557,14 @@ function updateConfigData() {
             }
 
             // 检查文件是否已存在于作者的文件列表中
-            if (!configData.authors[metadata.author].files.includes(file)) {
-                configData.authors[metadata.author].files.push(file);
+            if (!configData.authors[metadata.author].files.includes(path.basename(file))) {
+                configData.authors[metadata.author].files.push(path.basename(file));
             }
             
             // 从其他作者的文件列表中移除此文件，确保作者信息一致性
             Object.keys(configData.authors).forEach(author => {
-                if (author !== metadata.author && configData.authors[author].files.includes(file)) {
-                    configData.authors[author].files = configData.authors[author].files.filter(f => f !== file);
+                if (author !== metadata.author && configData.authors[author].files.includes(path.basename(file))) {
+                    configData.authors[author].files = configData.authors[author].files.filter(f => f !== path.basename(file));
                     
                     // 如果该作者没有其他文件了，移除该作者
                     if (configData.authors[author].files.length === 0) {

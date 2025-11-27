@@ -6,7 +6,7 @@ class NavigationEnhancements {
 
     // 初始化所有导航功能
     init() {
-        this.initBreadcrumb();
+        // this.initBreadcrumb();
         this.initSidebarNavigation();
         this.initBackToTop();
         this.initKeyboardShortcuts();
@@ -53,8 +53,19 @@ class NavigationEnhancements {
                 
                 // 如果是Markdown文件，使用viewer.html加载
                 if (cleanUrl.endsWith('.md') && !cleanUrl.includes('viewer.html')) {
-                    const fileName = cleanUrl.split('/').pop();
-                    cleanUrl = `docs/viewer.html?file=${fileName}`;
+                    // 如果是文件名，尝试在文档列表中查找完整路径
+                    if (!cleanUrl.includes('/') && typeof window.ALL_DOCS !== 'undefined' && window.ALL_DOCS.length > 0) {
+                        const doc = window.ALL_DOCS.find(d => d.filename === cleanUrl.split('/').pop() || d.path === cleanUrl);
+                        if (doc && doc.path) {
+                            cleanUrl = `docs/viewer.html?file=${doc.path}`;
+                        } else {
+                            const fileName = cleanUrl.split('/').pop();
+                            cleanUrl = `docs/viewer.html?file=${fileName}`;
+                        }
+                    } else {
+                        const fileName = cleanUrl.split('/').pop();
+                        cleanUrl = `docs/viewer.html?file=${cleanUrl}`;
+                    }
                 }
                 
                 li.innerHTML = `<a href="${cleanUrl}" class="breadcrumb-link">${item.text}</a>`;
@@ -103,7 +114,7 @@ class NavigationEnhancements {
                 url: '',
                 isCurrent: true
             });
-        } else if (path.includes('DPapyru-ForContributors-Basic.md')) {
+        } else if (path.includes('DPapyru-ForContributors-Basic.md') || path.includes('给贡献者阅读的文章')) {
             items.push({
                 text: '贡献指南',
                 url: '',

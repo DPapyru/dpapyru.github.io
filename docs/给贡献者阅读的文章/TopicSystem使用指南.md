@@ -1,5 +1,5 @@
 ---
-title: Topic 系统使用指南
+title: Topic系统使用指南
 author: 小天使
 category: 怎么贡献
 topic: advanced
@@ -12,8 +12,6 @@ last_updated: 2025-11-27
 prev_chapter: test-navigation.md
 next_chapter: null
 ---
-
-# Topic 系统使用指南
 
 ## 概述
 
