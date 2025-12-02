@@ -1,70 +1,157 @@
 ***
-This Guide has been updated to 1.4. If you need to view the old 1.3 version of this wiki page, click [here](https://github.com/tModLoader/tModLoader/wiki/Basic-tModLoader-Modding-Guide/9c8ec569fb957e9ad34edb565e653a805811b5a6)
+这篇教程已经更新至1.4  
+如果你需要1.3版本的老教程, 请点击[这里](https://github.com/tModLoader/tModLoader/wiki/Basic-tModLoader-Modding-Guide/9c8ec569fb957e9ad34edb565e653a805811b5a6)  
+**译注:这篇不提供翻译**
 ***
 
-The first thing you have to do is decide on the program that you wish to code in. There are essentially two choices, a **text editor** or an **IDE**. If you are completely new to the concept of binary logic and design, you might want to start with a text editor to get the hang of the basics and be able to work with simple code without feeling overwhelmed by the interface and tools of an IDE. For most other cases, an **Integrated Development Environment** is what you want to use. An IDE is software that sets up a convenient interface for a particular programming language, in our case it's C#. An IDE can do anything text editors can do because a text editor is just a component of the IDE.
+你需要做的第一件事情是决定你希望用哪款程序写代码  
+基本上是两个选择，**文本编辑器**或者**IDE**  
+如果你对二进制逻辑和设计的概念完全陌生，你可能想先从文本编辑器开始，这样可以掌握基础知识，并能够处理简单的代码，而不会被IDE的界面和工具弄得手忙脚乱。  
+对于其它更多的情况，你会更想使用**集成开发环境IDE**  
+集成开发环境（IDE）是一种软件，它为特定编程语言提供了一个便利的界面，而我们需要用到的编程语言是C#  
+一款IDE可以做文本编辑器能作到的任何事情，因为文本编辑器是IDE的一个部分
 
-You will also need to install the ".NET 8.0 SDK" by following [these instructions](https://github.com/tModLoader/tModLoader/wiki/tModLoader-guide-for-developers#net-sdk).
+你还需要按照[这些操作指引](https://github.com/tModLoader/tModLoader/wiki/tModLoader-guide-for-developers#net-sdk)安装".NET 8.0 SDK"  
+[译注-此处原文](https://github.com/tModLoader/tModLoader/wiki/tModLoader-guide-for-developers#net-sdk)
 
-This guide will get you familiar with tModLoader modding and will help you make your first mod. Please read and follow [Basic Prerequisites](https://github.com/tModLoader/tModLoader/wiki/Basic-Prerequisites) 
+这篇教程会让你熟悉tModLoader模组开发，并帮助你制作第一个模组  
+在此之前，请先阅读参考[基础-先决条件](https://dpapyru.github.io/LogSpiral/viewer.html?file=1-%E5%9F%BA%E7%A1%80/0-Basic-Prerequisites%20%E5%9F%BA%E7%A1%80-%E5%85%88%E5%86%B3%E6%9D%A1%E4%BB%B6.md)   
+[译注-此处原文](https://github.com/tModLoader/tModLoader/wiki/Basic-Prerequisites)
 
-# Your First Mod
-To start, we will make a very simple mod to get you familiar with how mods are created for tModLoader. 
+# 你的第一个模组
+为了入门，我们会先制作一个非常简单的模组，让你熟悉tModLoader的模组是怎么创造的。
 
-## Generate a Mod Skeleton
-To begin, we will use tModLoader to generate a basic mod skeleton. Open up tModLoader, then open the "Workshop" menu, then open the "Develop Mods" menu, and click the "Create Mod" button. Now, fill out the input boxes. I suggest `TutorialMod`, `Tutorial Mod`, `NewbieModder`, and `TutorialSword` respectively. Finally, click "Create". If a message comes up, fix the issue, otherwise you'll be taken back to the Mod Sources menu.
+## 生成一个模组框架
+首先，我们会用tModLoader来创建一个基础模组框架  
+打开tModLoader，然后打开"创意工坊"目录，打开"开发模组"目录  
+点击"创建模组"按钮，然后填充那些输入框  
 
-> [!NOTE]
-> If you are making a mod you intend to publish on the workshop, it needs to have a unique `ModName` instead of `TutorialMod`. It needs to be a name not taken by any other mod on the workshop, otherwise you will not be able to publish it. See [Renaming a mod](https://github.com/tModLoader/tModLoader/wiki/Workshop#renaming-a-mod) if you need to rename an existing mod.
+比如，`TutorialMod`，`教程模组`，`新人开发者`  
+以及 `TutorialSword` (可选)  
+(译注：依次是**模组内部名**、模组显示名、模组作者署名  
+以及默认的模板剑**类名**(如果不填写就不会生成模板剑))  
+
+最后，点击"生成"  
+如果有报错信息弹出就照着提示信息修改  
+否则你会回到模组源码目录
+
+> [!注意]
+> 如果你想制作一个后续发布到创意工坊的模组  
+它需要一个独特的 **模组内部名** 而不是 `TutorialMod`.  
+ 这需要一个和创意工坊上已有模组都不一样的内部模组名  
+ 否则你将无法发布  
+ 如果你需要给一个已经存在的模组重命名的话，可以参考  
+ [重命名一个模组](https://github.com/tModLoader/tModLoader/wiki/Workshop#renaming-a-mod)   
+[译注-此处原文](https://github.com/tModLoader/tModLoader/wiki/Workshop#renaming-a-mod)
 
 ![](https://i.imgur.com/X5x90vD.png)    
 
-## Mod Skeleton Contents
-Click the "Open Sources" button on the "Develop Mods" menu to open the `ModSources` folder. You can also open the `ModSources` folder in your file browser by navigating to `Documents\My Games\Terraria\tModLoader\ModSources\`. Next open the folder for your mod, if you are following the guide it should be a folder called `TutorialMod`. This folder contains all the code relating to this mod. Currently, there should be 9 basic files added by the mod skeleton generator. Here is an explanation of each of those files:    
-1. **[ModName].cs** - This is the `Mod` class. It is the central file to any mod. One and only one `Mod` class can exist in every mod. For simple mods this file will be very sparse, but in this class various global things can happen.     
-2. **description.txt** - Contains text for the description of the mod. Click the `More Info` button in the Mod menu to view in game.
-3. **description_workshop.txt** - This contains a description of this mod to be shown on the [Steam workshop website](https://steamcommunity.com/app/1281930/workshop/). The contents of this file can be formatted with additional [BBCode formatting](https://steamcommunity.com/comment/ForumTopic/formattinghelp) to make an impressive homepage for your mod and get user interested in it. One example of what is possible with BBCode formatting is the workshop page for [The Stars Above](https://steamcommunity.com/sharedfiles/filedetails/?id=2563862309) mod.    
-4. **build.txt** - Contains the version, author, and display name of your mod. Can contain other [values](https://github.com/tModLoader/tModLoader/wiki/build.txt). Necessary.  
-5. **icon.png** - The 80x80 icon that will show in-game. You can create a more detailed or higher resolution `icon_workshop.png` version of your icon for the Steam workshop website. That file can be up to 512x512.
-6. **icon_small.png** - The 30x30 icon that will show in the bestiary mod source filter and the mod configuration list. To match the look of existing bestiary icons, you can add a black drop shadow to the bottom right at 40% opacity. See [ExampleMod's icon_small.png](https://github.com/tModLoader/tModLoader/blob/stable/ExampleMod/icon_small.png) for an example. If unedited, it will not be used and a `?` icon will show in the bestiary.
-7. **[ModName].csproj** - A project file for Visual Studio set up for debugging your Mod. Debugging is extremely useful but takes a bit of learning, don't delete it.
-8. **Properties/launchSettings.json** - Related to `[ModName].csproj`, contains the path to the tModLoader files for debugging. Don't remove, you'll want it later as you gain experience.  
-9. **Content/Items/[ItemName].cs** - A simple Sword item. Use this as an example as you learn to make additional `ModItem` classes.  
-10. **Content/Items/[ItemName].png** - The corresponding sprite.  
-11. **Localization/en-US_Mods.[ModName].hjson** - Contains the English text for content in your mod. It currently contains the display name and tooltip for the generated sword. This file will automatically update with entries for new content you add to the mod. See [the Localization wiki page](https://github.com/tModLoader/tModLoader/wiki/Localization) to learn more about localization and how to support other languages.
+## 模组框架内容
+点击"开发模组"中的"打开源码文件夹"按钮以打开`ModSources`文件夹  
+你也可以在你的文件浏览器中导航到`Documents\My Games\Terraria\tModLoader\ModSources\`以打开`ModSources`文件夹  
+接下来打开你的模组所在的文件夹，如果你照着教程填写信息，那里会有个叫作`TutorialMod`的文件夹  
+这个文件夹包含了所有和这个模组相关的代码  
+目前，这里应该会有由模组框架生成器添加的9个基础文件。  
+以下是对这些基础文件的解释：    
+1. **[模组内部名].cs** - 这个就是 `Mod` 类  
+ 它是对于所有模组的核心文件， 在每个模组中有且仅有一个`Mod`类
+ 对于简单的模组，这里面可能没多少内容，但是这个类里可以发生许多全局性的事件(译注：我没太看懂，后续再改()) 
+2. **description.txt** - 包含了模组的描述文本，在游戏的模组目录里点击`更多信息`按钮以查看
+3. **description_workshop.txt** - 这包含了会显示在[Steam 创意工坊](https://steamcommunity.com/app/1281930/workshop/)上的模组描述内容
+这个文件的内容可以以[BBCode 格式](https://steamcommunity.com/comment/ForumTopic/formattinghelp)编写，以给你的模组制作一个更令人印象深刻的主页来让用户对它更感兴趣  
+一个展现BBCode 格式有哪些可能的例子是[星海苍穹](https://steamcommunity.com/sharedfiles/filedetails/?id=2563862309)模组的创意工坊页面   
+4. **build.txt** - 包含 版本, 作者, 以及模组的显示名  
+也可以包含一些其它的[内容](https://github.com/tModLoader/tModLoader/wiki/build.txt)  
+是必要的  
+[译注-此处原文](https://github.com/tModLoader/tModLoader/wiki/build.txt)  
+5. **icon.png** - 在游戏中显示的80x80图标  
+你可以制作一个更详细或者更高分辨率的`icon_workshop.png`图标版本在Steam 创意工坊页面中使用  
+这个文件最大会是512x512
+6. **icon_small.png** - 在图鉴的模组筛选器以及模组配置列表中会使用到的30x30小图标  
+ 为了和已有图鉴图标的风格融洽，你可以添加一个40%不透明度的黑影在图标右下方  
+  可以参考 [ExampleMod的小图标](https://github.com/tModLoader/tModLoader/blob/stable/ExampleMod/icon_small.png) 作为示例  
+   如果你不修改这个文件，这个现有的文件不会使用，在图鉴中会显示一个"?"
+7. **[模组内部名].csproj** - 一个给Visual Studio调试你的项目的项目文件  
+调试是一个极其有用的手段，需要一定的学习成本  
+不要删掉这个文件
+8. **Properties/launchSettings.json** - 和`[模组内部名].csproj`相关联，包含了到tModLoader文件的路径，用于调试  
+不要删掉这个文件，你后续会用到它
+9. **Content/Items/[物品名].cs** - 一个简单的剑类物品  
+ 这是一个示例，教你怎么制作 `ModItem` 类 
+10. **Content/Items/[物品名].png** - 相应的贴图  
+11. **Localization/en-US_Mods.[ModName].hjson** - 包含了你的模组内容的英文本地化文本  
+它目前包含了那把示例剑的显示名和物品描述，这个文件会随着你的新内容的添加字段添加一些条目. 参考 [本地化教程](https://github.com/tModLoader/tModLoader/wiki/Localization) 了解关于本地化的更多内容，以及如何给其它语言制作本地化  
+[译注-此处原文](https://github.com/tModLoader/tModLoader/wiki/build.txt)
 
 ![](https://i.imgur.com/tTmp0bq.png)    
 
-## Learn how to Build the Mod
-We now have a ready-made mod ready to be built. Start up tModLoader and open the "Workshop" menu, then open the "Develop Mods" menu. You should see an entry with the mod you just created. Now click the "Build + Reload" button. If you didn't get any errors, your mod will show up in the Mods menu!
+## 学习如何构建模组
+我们现在有个准备好用于构建的模组  
+启动tModLoader然后打开"创意工坊"目录  
+打开"开发模组"目录  
+你会看见你刚创建的模组的条目  
+现在点击"构建并重新加载"按钮  
+如果没有出现任何错误，你的模组会出现在模组目录当中！
 
 ![](https://i.imgur.com/unoLL8h.png)
 
-Now go in game, make a workbench and mine 10 dirt blocks, and you should see that you can craft a new sword!
+现在在游戏中，造一个工作台，挖十块土u 
+你就可以看见你能造一把新的剑了！
 
 ![](http://i.imgur.com/UQb3tXq.png)
 
-Wow! Amazing. But 50 damage isn't enough. We will now do our first actual programming. Open up the `ModSources\[ModName]\Content\Items\TutorialSword.cs` file in Notepad++. Find the line with `Item.damage = 50;` and change 50 to 100. Now, save the file! Remember not to mess up the syntax that you learned in the Basic Prerequisites lesson. 
+ 哇，简直是非常Amazing啊！但是50伤不是很够的样子.   
+ 我们现在开始我们第一次实打实地编程，打开 `ModSources\[模组内部名]\Content\Items\TutorialSword.cs` 文件  
+ 找到写着 `Item.damage = 50;` 的那一行，然后把50改成100  
+ 现在保存文件! 记住不要弄混你在基础-先决条件课里学的语法 
 
-Next, open up the `ModSources\[ModName]\Localization\en-US_Mods.[ModName].hjson` file also in Notepad++. This is where the English text shown to the user such as the item name and tooltip are set. Change `DisplayName: Tutorial Sword` to `DisplayName: My Tutorial Sword`, then change the `Tooltip` entry to `Tooltip: My first sword`, and finally save that file. Note that the `Tooltip` entry in the default mod uses a multiline entry (read more about [multiline syntax here](https://github.com/tModLoader/tModLoader/wiki/Localization#multiline)), that is why it looks so much different from the `DisplayName` entry. The whole entry including the `'''` at the start and end will need to be replaced with `My first sword` since we only want 1 line.
+接着，打开 `ModSources\[模组内部名]\Localization\en-US_Mods.[模组内部名].hjson` 文件  
+这是显示我们的英文物品名和物品描述给用户的地方  
+将`DisplayName: Tutorial` 修改为 `DisplayName: My Tutorial Sword`, 然后修改 `Tooltip` 条目为 `Tooltip: My first sword`, 最后保存那个文件  
+记住在default mod中使用的 `Tooltip` 条目是多行的 (在这里了解更多[多行内容语法](https://github.com/tModLoader/tModLoader/wiki/Localization#multiline))  
+这就是为什么它看起来和 `DisplayName` 条目如此不同  
+这里包含 `'''` 在开头和结尾的条目会被替换成`My first sword`  
+因为我们只需要一行  
+(译注：中文的可以**复制粘贴**(不要直接改)这里英文的文件，将en-US改为zh-Hans，记得去掉最后那个 - 副本，然后就可以写中文的内容了，如果在游戏中出现乱码就在vs的**高级保存选项**里保存为utf-8带签名编码，vs的高级保存选项参考[这篇](https://www.cnblogs.com/willingtolove/p/12121577.html)
+还有就是记得确保你中文的条目在英文那边都有)
 
-Next, go in game, once again build and reload the mod and acquire the sword again. You should see the new damage, the new item name, and the new tooltip.
+接着在游戏里，再次重新构建并加载然后获得那把剑，你应当看到它新的攻击值，新的物品名以及新的物品描述
 
-Lastly, the mod you built is packaged into a `.tmod` file called `[ModName]`, found in `tModLoader\Mods`. If you want your friends to play your mod but don't want to publish it yet, you can send them this file and have them place it in the same folder. (Or you can publish to the workshop and set it as "Friends Only" to keep it somewhat private. This approach will allow the mod to update automatically for your friends when you publish updates.)
+最后，你的模组被打包为了一个 `.tmod` 文件叫作 `[模组内部名]`  
+ 在 `tModLoader\Mods`文件夹中  
+ 如果你想你的朋友玩你的模组，但是还不想发布它，就可以在这里找到你的模组发送给你的朋友，放到一样的目录下.  
+ (或者你可以发布到创意工坊然后设置为 "仅朋友可见" 来确保它某种程度上还是私有的，这个方法可以在你发布更新的时候让你的朋友自动更新你的模组)
 
-## Experiment a little
+## 做点小实验
 
-You can now experiment a little more by changing some of the other item values. Remember, you have to save your changes and then run `build and reload` to see your changes in-game.
+现在你可以修改其它物品的一些数值进行你的小实验  
+记住，你需要保存你的改动然后点击 `构建并重新加载`  
+以在游戏中看见你的改动
 
-## Next Steps
+## 接下来的步骤
 
-Now that you have a simple mod with a simple sword, it is time to branch out and learn other skills. Take it slow and experiment with something you want to learn. If you are seeking help from other modders on the Forum or [Discord](https://discord.gg/tmodloader), it is best to phrase your question in terms of vanilla things. For example, if you are curious how the Molten Fury changes Wooden Arrows to Flaming Arrows, it would be wise to ask "How does the Molten Fury change the projectile it shoots only when Wooden Arrows are used as ammo?" Phrasing your questions in this manner is most effective.
+现在你有个拥有一把简单的剑的简单模组，是时候学点别的技术了  
+可以慢慢了解你想做的东西并开展你的实验  
+如果你需要其它模组开发者的帮助，可以打开论坛或者[Discord]
+(https://discord.gg/tmodloader)  
+(译注-以及[裙中世界](https://fs49.org)和相应的交流群921853970)  
+(译注-以及[泰拉瑞亚Mod制作教程](https://dpapyru.github.io/)和相应的交流群960277607)  
 
-Continue reading to learn more about tModLoader and how to get better.
+你最好用原版已有的概念表达你的问题，比如，如果你好奇熔火之怒是怎么把木箭变成燃烧箭的，你应当提问"怎么像熔火之怒那样只在使用木箭为弹药的时候改变它的弹幕？"  
+用这样的方式提问是最有效率的  
 
-# How do I reference things in my mod from other files?
+继续阅读以了解更多关于tModLoader以及如何进步的内容
 
-One of the first things modders seek to do is shoot a custom projectile from a custom weapon, or any other similar behavior that requires classes in your mod to reference other classes. To do this, we make use of the `ModContent.SomethingType` methods, where "Something" is replaced with "Item", "Projectile", "NPC", etc. For example, if you want your `ModItem` to shoot a specific `ModProjectile`, in your `ModItem.SetDefaults` method you would write `Item.shoot = ModContent.ProjectileType<MyProjectileClassName>();`. Conversely, shooting a projectile from the original game would be `Item.shoot = ProjectileID.WoodenArrowFriendly;` or something similar.
+# 我该怎么在我的模组里引用其它文件的内容？
+
+其中一个模组开发者会问的第一个问题是如何让一个自定义武器发射一个自定义弹幕，或者其它类似的行为需要在你的模组中由一个类引用另一个类  
+为了实现这个，我们需要使用`ModContent.SomethingType`函数
+其中的"Something"可以是"Item", "Projectile", "NPC"等等  
+比如，如果你想你的 `ModItem` 发射一个特定的 `ModProjectile`  
+在你的`ModItem.SetDefaults`函数在写  
+`Item.shoot = ModContent.ProjectileType<MyProjectileClassName>`  
+相比之下，发射一个原版弹幕是这样写
+`Item.shoot = ProjectileID.WoodenArrowFriendly`或者其它类似的
 
 Note that when attempting to reference a modded class, you need to add a "using statement" referencing that classes namespace. For example, if you write `ModContent.ProjectileType<MyProjectile>()` in a class, and the `MyProjectile` class is in the `MyMod.Content.Projectiles` namespace, you need to add `using MyMod.Content.Projectiles;` to the top of the .cs file. A good IDE will [automate this process](https://github.com/tModLoader/tModLoader/wiki/Why-Use-an-IDE#show-potential-fixes) for you.
 
@@ -166,15 +253,29 @@ Internal names do not support whitespaces, this means you need to name `My Super
 ### Keeping code tidy and organized
 Though this is a more advanced topic (part of design patterns, which might be covered in expert tutorials later), it is useful to make sure you abstract your code properly. More on this in the code abstraction guide. For beginners, take this tip: after you've programmed something and it is finished, look at your code and ask yourself what is happening in every place. Now you should ask if the code is tidy. Try to find repeating parts of code and give it a dedicated method. Next, try to separate parts of your code by their logic and give them their own method as well, providing a useful descriptive name (see the previous tip) so it becomes easy to identify what that part of code is doing. This is a brief summary of a part of code abstraction.
 
-### Comment your code
-It is not always obvious what code is doing, or sometimes you wish to make a note for yourself or other modders working with your code. You can make single line comments like this `// this is a comment`, or you can make entire comment blocks like this: 
+### 给你的代码写注释
+并不是什么时候都能很容易看出你的代码在干什么  
+又或者，你希望给你自己或者协作者写个笔记  
+你可以像这样写个单行注释`// 这是个注释`  
+或者你可以像这样添加一整个注释块：
 ```cs
 /*
- * This is a comment block
- * And spans multiple lines!
+ * 这是一个注释块
+ * 可以有很多行！
 */
 ```
-For beginners, it is highly advised to add as many comments as possible, even for things you think you already understand well. This will help you in the long run, you might come back to code months later and have forgotten how it works. For experienced modders, the challenge is to use as little comments as possible; your code should be evident in its behavior for others just by looking at it. Note many languages use different notations for comments, such as `::` and `#`, for C# use what's shown above.
+对于初学者，相当建议添加尽可能多的注释  
+甚至是对于哪些你认为你已经理解得很好的内容  
+这会在长期来看帮助你  
+你也许会隔几个月重新回到项目，但是忘记某处代码是怎么工作的  
 
-# Publishing your Mod
-Once your mod is in a working state, you can publish your mod to the Steam Workshop. This will make your mod available to all tModLoader users to subscribe to. The [Workshop guide](https://github.com/tModLoader/tModLoader/wiki/Workshop) has more information about that.
+对于富有经验的开发者，下一个挑战是使用尽可能少的注释  
+你的代码应当在写得足够简明，让其它人能只读代码就理解它的行为
+
+顺带一提，不同的语言使用不同的方式注释  
+比如`::`和`#`，对于C#，它使用上面展示给你的方式
+
+# 发布你的模组
+一旦你的模组是在工作状态，你就可以将你的模组发布到Steam 创意工坊  
+这能保证你的模组对其它订阅了你的模组的tModLoader用户可用  
+ [创意工坊指引](https://github.com/tModLoader/tModLoader/wiki/Workshop) 有关于这的更多信息
