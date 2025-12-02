@@ -1,0 +1,83 @@
+{
+    "标题": {
+        "scope": "yaml",
+        "prefix": "title",
+        "body": "title: ${1:文章标题}",
+        "description": "添加文章标题"
+    },
+    "作者": {
+        "scope": "yaml",
+        "prefix": "author",
+        "body": "author: ${1:作者名}",
+        "description": "添加作者信息"
+    },
+    "日期": {
+        "scope": "yaml",
+        "prefix": "date",
+        "body": "date: $CURRENT_YEAR-$CURRENT_MONTH-$CURRENT_DATE",
+        "description": "添加发布日期"
+    },
+    "最后更新日期": {
+        "scope": "yaml",
+        "prefix": "last_updated",
+        "body": "last_updated: $CURRENT_YEAR-$CURRENT_MONTH-$CURRENT_DATE",
+        "description": "添加最后更新日期"
+    },
+    "标签": {
+        "scope": "yaml",
+        "prefix": "tags",
+        "body": "tags: [\"${1:标签1}\", \"${2:标签2}\"]",
+        "description": "添加文章标签"
+    },
+    "分类": {
+        "scope": "yaml",
+        "prefix": "category",
+        "body": "category: ${1:分类}",
+        "description": "添加文章分类"
+    },
+    "难度级别": {
+        "scope": "yaml",
+        "prefix": "difficulty",
+        "body": "difficulty: ${1|beginner,intermediate,advanced|}",
+        "description": "设置文章难度级别"
+    },
+    "阅读时间": {
+        "scope": "yaml",
+        "prefix": "time",
+        "body": "time: ${1|5分钟,10分钟,15分钟,30分钟|}",
+        "description": "添加预计阅读时间"
+    },
+    "文章描述": {
+        "scope": "yaml",
+        "prefix": "description",
+        "body": "description: ${1:简短描述}",
+        "description": "添加文章简短描述"
+    },
+    "深浅颜色": {
+        "scope": "yaml",
+        "prefix": "colorLD",
+        "body": [
+            "colorLD:",
+            "   exColor:",
+            "    - ${1:#f0f}",
+            "    - ${2:#0f0}",
+            "   exColorB:",
+            "    - ${3:#f0fff2}",
+            "    - ${4:#22f02b}",
+        ],
+        "description": "添加主题颜色配置(亮色和暗色)(注意！exColor这一类变量名不能使用非英文字符,否则无法显示内容！)"
+    },
+    "颜色动画": {
+        "scope": "yaml",
+        "prefix": "colorChange",
+        "body": [
+            "colorChange:",
+            "   exColor:",
+            "    - ${1:#f0f}",
+            "    - ${2:#0f0}",
+            "    - ${3:#ff0}",
+            "    - ${4:#f0f}",
+        ],
+        "description": "添加颜色动画(注意！exColor这一类变量名不能使用非英文字符,否则无法显示内容！)"
+    }
+}

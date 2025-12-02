@@ -453,6 +453,7 @@ function initMarkdownRenderer() {
     // 检查marked.js库是否已加载并配置选项
     if (typeof marked !== 'undefined') {
         console.log('Marked.js已加载，正在配置...');
+        // 配置marked.js库
         marked.setOptions({
             highlight: function (code, lang) {
                 if (typeof Prism !== 'undefined' && Prism.languages[lang]) {
@@ -471,10 +472,117 @@ function initMarkdownRenderer() {
             xhtml: false,
             pedantic: false
         });
+
+        // 将扩展添加到marked
+        marked.use({ extensions: [markdownRenderColorLD(), markdownRenderColorChange()] });
+
         console.log('Marked.js配置完成');
     } else {
         console.error('Marked.js未加载，请检查库文件是否正确引入');
     }
+}
+
+/**
+ * 让md渲染支持使用深浅颜色变量
+ */
+function markdownRenderColorLD() {
+    return {
+        name: 'color',
+        level: 'inline',
+        // 匹配规则
+        start(src) {
+            // 更精确的匹配，检查是否是 {color:(变量名)} 开头
+            const colorMatch = src.match(/\{color:\s*([a-zA-Z0-9_-]+)\}/g);
+            return colorMatch ? colorMatch.index : -1;
+        },
+        // 标记段落
+        tokenizer(src) {
+            const rule = /\{color:\s*([a-zA-Z0-9_-]+)\}\{([^{}]*)\}/g;
+            const match = src.match(rule);
+            console.log('匹配结果:', match);
+            if (match) {
+                return {
+                    type: 'color',
+                    raw: src,
+                    allMatch: match
+                };
+            }
+        },
+        renderer(token) {
+            if (token.type !== 'color')
+                return;
+            const allMatch = token.allMatch;
+            let result = token.raw;
+            const rule = /\{color:\s*([a-zA-Z0-9_-]+)\}\{([^{}]*)\}/; // 还是需要遍历规则
+            allMatch.forEach(item => {
+                const match = item.match(rule); // 获取匹配结果
+                if (match) {
+                    const drawColor = match[1]; // 颜色
+                    const text = match[2]; // 文本
+
+                    const spanColor = `<span style="color: var(--marked-text-color-${drawColor});">${text}</span>`;
+                    result = result.replace(match[0], spanColor); // 替换原本内容
+                }
+                else {
+                    console.error('匹配失败:', item);
+                }
+            });
+            // 通过渲染成html修改颜色,并且强制覆盖内容
+            return result;
+        }
+    };
+}
+
+/**
+ * 让md渲染支持使用变化颜色
+ */
+function markdownRenderColorChange() {
+    return {
+        name: 'colorChange',
+        level: 'inline',
+        // 匹配规则
+        start(src) {
+            // 更精确的匹配，检查是否是 {color:(变量名)} 开头
+            const colorMatch = src.match(/\{colorChange:\s*([a-zA-Z0-9_-]+)\}/g);
+            return colorMatch ? colorMatch.index : -1;
+        },
+        // 标记段落
+        tokenizer(src) {
+            const rule = /\{colorChange:\s*([a-zA-Z0-9_-]+)\}\{([^{}]*)\}/g;
+            const match = src.match(rule);
+            console.log('颜色动画匹配结果:', match);
+            if (match) {
+                return {
+                    type: 'colorChange',
+                    raw: src,
+                    allMatch: match
+                };
+            }
+        },
+        renderer(token) {
+            if (token.type !== 'colorChange')
+                return;
+            const allMatch = token.allMatch;
+            let result = token.raw;
+            const rule = /\{colorChange:\s*([a-zA-Z0-9_-]+)\}\{([^{}]*)\}/;
+            allMatch.forEach(item => {
+                const match = item.match(rule); // 获取匹配结果
+                if (match) {
+                    const drawColor = match[1]; // 颜色
+                    const text = match[2]; // 文本
+
+                    const spanColor = `<span style="animation: colorChange-${drawColor} 2s infinite; display: inline-block;">${text}</span>`;
+                    result = result.replace(match[0], spanColor); // 替换原本内容
+                    console.log('修改内容:', spanColor);
+                }
+                else {
+                    console.error('颜色动画匹配失败:', item);
+                }
+            });
+            // 通过渲染成html修改颜色,并且强制覆盖内容
+            return result;
+        }
+    };
 }
 
 /**

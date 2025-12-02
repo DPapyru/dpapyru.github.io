@@ -834,21 +834,15 @@
             const match = text.match(frontMatterRegex);
 
             if (match) {
-                const metadata = {};
-                const metadataLines = match[1].split('\n');
+                const yamlText = match[1];
+                const content = match[2];
 
-                metadataLines.forEach(line => {
-                    const colonIndex = line.indexOf(':');
-                    if (colonIndex > 0) {
-                        const key = line.substring(0, colonIndex).trim();
-                        const value = line.substring(colonIndex + 1).trim();
-                        metadata[key] = value;
-                    }
-                });
+                // 更强大的YAML解析器
+                const metadata = parseYaml(yamlText);
 
                 return {
                     metadata: metadata,
-                    content: match[2]
+                    content: content
                 };
             }
 
@@ -856,6 +850,64 @@
                 metadata: {},
                 content: text
             };
+        }
+
+        // 简单的YAML解析器，支持嵌套对象和数组
+        function parseYaml(yamlText) {
+            const lines = yamlText.split('\n');
+            const result = {};
+            const stack = [{ obj: result, indent: -1 }];
+
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i];
+                if (!line.trim()) continue;
+
+                // 计算缩进级别
+                const indent = line.search(/\S/);
+                const trimmedLine = line.trim();
+
+                // 移除比当前缩进级别更深的所有对象
+                while (stack.length > 1 && stack[stack.length - 1].indent >= indent) {
+                    stack.pop();
+                }
+
+                const currentObj = stack[stack.length - 1].obj;
+
+                // 处理数组项（以-开头）
+                if (trimmedLine.startsWith('-')) {
+                    const arrayKey = Object.keys(currentObj).pop();
+                    if (!Array.isArray(currentObj[arrayKey])) {
+                        currentObj[arrayKey] = [];
+                    }
+                    const value = trimmedLine.substring(1).trim();
+                    currentObj[arrayKey].push(value);
+                }
+                // 处理键值对
+                else if (trimmedLine.includes(':')) {
+                    const colonIndex = trimmedLine.indexOf(':');
+                    const key = trimmedLine.substring(0, colonIndex).trim();
+                    const value = trimmedLine.substring(colonIndex + 1).trim();
+
+                    // 如果值为空，这是一个对象
+                    if (!value) {
+                        const newObj = {};
+                        currentObj[key] = newObj;
+                        stack.push({ obj: newObj, indent: indent });
+                    }
+                    // 如果值不为空，是简单键值对
+                    else {
+                        // 移除引号
+                        let finalValue = value;
+                        if ((value.startsWith('"') && value.endsWith('"')) ||
+                            (value.startsWith("'") && value.endsWith("'"))) {
+                            finalValue = value.substring(1, value.length - 1);
+                        }
+                        currentObj[key] = finalValue;
+                    }
+                }
+            }
+
+            return result;
         }
 
         // 更新页面元数据（标题、难度、时间、作者、日期）

@@ -5,53 +5,53 @@
   --primary-hover: #1e7e34;
   --secondary-color: #6c757d;
   --secondary-hover: #545b62;
-  
+
   /* 背景颜色 */
   --bg-color: #fff;
   --bg-secondary: #f8f9fa;
   --bg-tertiary: #e9ecef;
   --bg-content: #fff;
-  
+
   /* 文本颜色 */
   --text-color: #333;
   --text-secondary: #666;
   --text-muted: #999;
   --text-light: #ccc;
-  
+
   /* 边框颜色 */
   --border-color: #e9ecef;
   --border-light: #f1f3f4;
   --border-dark: #dee2e6;
-  
+
   /* 链接颜色 */
   --link-color: #28a745;
   --link-hover: #1e7e34;
-  
+
   /* 侧边栏颜色 */
   --sidebar-bg: #fff;
   --sidebar-text: #333;
   --sidebar-link: #495057;
   --sidebar-hover: #f8f9fa;
   --sidebar-active: #e7f6ec;
-  
+
   /* 头部颜色 */
   --header-bg: #fff;
   --header-shadow: rgba(0, 0, 0, 0.1);
-  
+
   /* 代码块颜色 */
   --code-bg: #f8f9fa;
   --code-border: #e9ecef;
   --code-text: #e83e8c;
-  
+
   /* 表格颜色 */
   --table-stripe: #f8f9fa;
   --table-hover: #e7f6ec;
-  
+
   /* 搜索框颜色 */
   --search-bg: #f8f9fa;
   --search-border: #e9ecef;
   --search-focus: rgba(40, 167, 69, 0.15);
-  
+
   /* 滚动条颜色 */
   --scrollbar-track: #f1f1f1;
   --scrollbar-thumb: #c1c1c1;
@@ -59,18 +59,21 @@
   --sidebar-scrollbar-track: #f8f9fa;
   --sidebar-scrollbar-thumb: #28a745;
   --sidebar-scrollbar-thumb-hover: #1e7e34;
-  
+
   /* 阴影 */
   --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
   --shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   --shadow-md: 0 4px 15px rgba(0, 0, 0, 0.08);
   --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.1);
   --shadow-xl: 0 10px 20px rgba(0, 0, 0, 0.1);
-  
+
   /* 过渡效果 */
   --transition: all 0.3s ease;
   --transition-fast: all 0.2s ease;
   --transition-colors: color 0.3s ease, background-color 0.3s ease, border-color 0.3s ease;
+
+  /* 引用(>)颜色 */
+  --import-color: #888;
 }
 
 /* 深色主题 */
@@ -80,53 +83,54 @@
   --primary-hover: #1e7e34;
   --secondary-color: #6c757d;
   --secondary-hover: #545b62;
-  
+
   /* 背景颜色 */
   --bg-color: #121212;
   --bg-secondary: #1e1e1e;
   --bg-tertiary: #2a2a2a;
   --bg-content: #1e1e1e;
-  
+
+
   /* 文本颜色 */
   --text-color: #fff;
   --text-secondary: #ccc;
   --text-muted: #aaa;
   --text-light: #999;
-  
+
   /* 边框颜色 */
   --border-color: #333;
   --border-light: #444;
   --border-dark: #555;
-  
+
   /* 链接颜色 */
   --link-color: #28a745;
   --link-hover: #1e7e34;
-  
+
   /* 侧边栏颜色 */
   --sidebar-bg: #1e1e1e;
   --sidebar-text: #fff;
   --sidebar-link: #ccc;
   --sidebar-hover: #2a2a2a;
   --sidebar-active: #e7f6ec;
-  
+
   /* 头部颜色 */
   --header-bg: #1e1e1e;
   --header-shadow: rgba(0, 0, 0, 0.3);
-  
+
   /* 代码块颜色 */
   --code-bg: #2a2a2a;
   --code-border: #333;
   --code-text: #e83e8c;
-  
+
   /* 表格颜色 */
   --table-stripe: #2a2a2a;
   --table-hover: #e7f6ec;
-  
+
   /* 搜索框颜色 */
   --search-bg: #2a2a2a;
   --search-border: #333;
   --search-focus: rgba(40, 167, 69, 0.3);
-  
+
   /* 滚动条颜色 */
   --scrollbar-track: #1a1a1a;
   --scrollbar-thumb: #555;
@@ -134,11 +138,14 @@
   --sidebar-scrollbar-track: #2a2a2a;
   --sidebar-scrollbar-thumb: #28a745;
   --sidebar-scrollbar-thumb-hover: #1e7e34;
-  
+
   /* 阴影 */
   --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.15);
   --shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
   --shadow-md: 0 4px 15px rgba(0, 0, 0, 0.2);
   --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.2);
   --shadow-xl: 0 10px 20px rgba(0, 0, 0, 0.3);
+
+  /* 引用(>)颜色 */
+  --import-color: #666;
 }

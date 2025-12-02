@@ -1,12 +1,11 @@
 ---
-title: 给新人的入门建议
+title: 给新人的前言
 author: 小天使
-category: 入门
-topic: mod-basics
-order: 1
+date: 2025-12-02
+last_updated: 2025-12-02
+category: 分类
+tags: ["标签1", "标签2"]
 difficulty: beginner
 time: 5分钟
-description: 给新人的入门建议
-tags: ["入门","基础","建议"]
-last_updated: 2025-11-27
+description: 简短描述
 ---

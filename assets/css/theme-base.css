@@ -115,7 +115,7 @@
 }
 
 [data-theme="dark"] .markdown-content blockquote {
-    background-color: var(--bg-secondary) !important;
+    background-color: var(--import-color) !important;
     color: var(--text-secondary) !important;
     border-left-color: var(--primary-color) !important;
 }

@@ -910,21 +910,15 @@
             const match = text.match(frontMatterRegex);
 
             if (match) {
-                const metadata = {};
-                const metadataLines = match[1].split('\n');
+                const yamlText = match[1];
+                const content = match[2];
 
-                metadataLines.forEach(line => {
-                    const colonIndex = line.indexOf(':');
-                    if (colonIndex > 0) {
-                        const key = line.substring(0, colonIndex).trim();
-                        const value = line.substring(colonIndex + 1).trim();
-                        metadata[key] = value;
-                    }
-                });
+                // 更强大的YAML解析器
+                const metadata = parseYaml(yamlText);
 
                 return {
                     metadata: metadata,
-                    content: match[2]
+                    content: content
                 };
             }
 
@@ -932,6 +926,135 @@
                 metadata: {},
                 content: text
             };
+        }
+
+        // 简单的YAML解析器，支持嵌套对象和数组
+        function parseYaml(yamlText) {
+            // 移除开头和结尾的空白行
+            const lines = yamlText.trim().split('\n');
+            const result = {};
+
+            // 简单的栈结构跟踪当前对象和缩进级别
+            const stack = [{ obj: result, indent: -1 }];
+
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i];
+                if (!line.trim()) continue;
+
+                // 计算实际缩进（空格数）
+                const indent = line.search(/\S/);
+                const trimmedLine = line.trim();
+
+                // 移除比当前缩进级别更深的所有对象
+                while (stack.length > 1 && stack[stack.length - 1].indent >= indent) {
+                    stack.pop();
+                }
+
+                const current = stack[stack.length - 1];
+                const currentObj = current.obj;
+
+                // 处理数组项（以-开头）
+                if (trimmedLine.startsWith('-')) {
+                    const content = trimmedLine.substring(1).trim();
+
+                    // 检查是否是键值对形式 (- key: value)
+                    if (content.includes(':')) {
+                        const colonIndex = content.indexOf(':');
+                        const key = content.substring(0, colonIndex).trim();
+                        const value = content.substring(colonIndex + 1).trim();
+
+                        // 处理带引号的字符串
+                        let finalValue = value;
+                        if ((value.startsWith('"') && value.endsWith('"')) ||
+                            (value.startsWith("'") && value.endsWith("'"))) {
+                            finalValue = value.substring(1, value.length - 1);
+                        }
+
+                        // 如果当前对象是数组，则推入新对象
+                        if (Array.isArray(currentObj)) {
+                            const newObj = {};
+                            newObj[key] = finalValue;
+                            currentObj.push(newObj);
+                        } else {
+                            // 否则创建数组并添加第一个元素
+                            const arrayKey = Object.keys(currentObj).pop();
+                            if (!Array.isArray(currentObj[arrayKey])) {
+                                currentObj[arrayKey] = [];
+                            }
+                            const newObj = {};
+                            newObj[key] = finalValue;
+                            currentObj[arrayKey].push(newObj);
+                        }
+                    } else {
+                        // 简单值形式 (- value)
+                        let finalValue = content;
+                        if ((content.startsWith('"') && content.endsWith('"')) ||
+                            (content.startsWith("'") && content.endsWith("'"))) {
+                            finalValue = content.substring(1, content.length - 1);
+                        }
+
+                        // 确保当前上下文是数组
+                        const parent = stack[stack.length - 2];
+                        if (parent) {
+                            const parentObj = parent.obj;
+                            const arrayKey = Object.keys(parentObj).pop();
+
+                            if (!Array.isArray(parentObj[arrayKey])) {
+                                parentObj[arrayKey] = [];
+                            }
+                            parentObj[arrayKey].push(finalValue);
+                        }
+                    }
+                }
+                // 处理键值对 (key: value)
+                else if (trimmedLine.includes(':')) {
+                    const colonIndex = trimmedLine.indexOf(':');
+                    const key = trimmedLine.substring(0, colonIndex).trim();
+                    const value = trimmedLine.substring(colonIndex + 1).trim();
+
+                    // 如果值为空，这是一个嵌套对象
+                    if (!value) {
+                        const newObj = {};
+                        currentObj[key] = newObj;
+                        stack.push({ obj: newObj, indent: indent });
+                    }
+                    // 如果值不为空，是简单键值对
+                    else {
+                        // 处理带引号的字符串
+                        let finalValue = value;
+                        if ((value.startsWith('"') && value.endsWith('"')) ||
+                            (value.startsWith("'") && value.endsWith("'"))) {
+                            finalValue = value.substring(1, value.length - 1);
+                        }
+                        // 处理颜色值等特殊格式
+                        else if (value.startsWith('#')) {
+                            finalValue = value;
+                        }
+                        // 尝试转换数字
+                        else if (!isNaN(value) && !isNaN(parseFloat(value))) {
+                            finalValue = parseFloat(value);
+                        }
+                        // 处理布尔值
+                        else if (value.toLowerCase() === 'true') {
+                            finalValue = true;
+                        }
+                        else if (value.toLowerCase() === 'false') {
+                            finalValue = false;
+                        }
+
+                        currentObj[key] = finalValue;
+                    }
+                }
+                // 处理数组开始的情况 ([key]:)
+                else if (trimmedLine.endsWith(':')) {
+                    const key = trimmedLine.slice(0, -1).trim();
+                    const newArray = [];
+                    currentObj[key] = newArray;
+                    stack.push({ obj: newArray, indent: indent });
+                }
+            }
+
+            return result;
         }
 
         // 更新页面元数据（标题、难度、时间、作者、日期）
@@ -943,8 +1066,10 @@
             const last_updated = metadata.last_updated || '未知';
             const prevChapter = metadata.prev_chapter || null;
             const nextChapter = metadata.next_chapter || null;
+            const colorLD = metadata.colorLD || null;
+            const colorChange = metadata.colorChange || null;
 
-            console.log('更新页面元数据:', { title, difficulty, time, author, last_updated, prevChapter, nextChapter });
+            console.log('更新页面元数据:', { title, difficulty, time, author, last_updated, prevChapter, nextChapter, colorLD, colorChange });
 
             document.title = `${title} - 泰拉瑞亚Mod制作教程`;
             document.getElementById('current-doc-name').textContent = title;
@@ -955,11 +1080,118 @@
             document.getElementById('doc-author').textContent = author;
             document.getElementById('doc-date').textContent = last_updated;
 
+            // 更新特殊颜色
+            updateColorStyle(colorLD, colorChange);
+
             // 更新面包屑导航
             updateBreadcrumbNavigation(metadata, filePath);
 
             // 更新导航按钮
             updateNavigationButtons(prevChapter, nextChapter);
+        }
+
+        function updateColorStyle(colorLDArray, colorChangeArray) {
+            const style = document.createElement('style'); // 创建一个style
+            // 深浅字体颜色
+            let colorLD = null;
+            if (!colorLDArray)
+                console.warn('没有设置深浅字体颜色!跳过深浅颜色的设置!');
+            else
+                colorLD = colorLDStyle(colorLDArray);
+            // 颜色动画
+            let colorChange = null;
+            if (!colorChangeArray)
+                console.warn('没有设置颜色转换变量!跳过颜色转换变量的设置!');
+            else
+                colorChange = colorChangeStyle(colorChangeArray);
+
+            style.textContent = `
+                        ${colorChange || ''}
+                        :root{
+                            ${colorLD.light}
+                        }
+                        [data-theme="dark"]{
+                            ${colorLD.dark}
+                        }
+                    `;
+            document.head.appendChild(style);
+        }
+
+        function colorLDStyle(colorLDArray) {
+            try {
+                const forEach_color = colorLDArray;
+                let style_text_light = '';
+                let style_text_dark = '';
+                if (forEach_color) {
+                    Object.entries(forEach_color).forEach(color => {
+                        // 为每种颜色生成唯一的CSS类名
+                        // color0是名字
+                        // color1是颜色数组
+                        // color1下:
+                        // 0是浅色,1是深色
+                        style_text_light = style_text_light.concat(`
+                            --marked-text-color-${color[0]}:${color[1][0]};
+                        `).trim();
+                        style_text_dark = style_text_dark.concat(`
+                            --marked-text-color-${color[0]}:${color[1][1]};
+                        `).trim();
+                    });
+                    return {
+                        light: style_text_light,
+                        dark: style_text_dark
+                    };
+                }
+                else {
+                    console.error('特殊字体颜色配置失效！');
+                }
+            } catch (error) {
+                console.error('创建css时候出现严重问题!问题:', error);
+            }
+        }
+
+        /**
+         * 根据颜色变化数组生成CSS动画样式
+         * @param {Array} colorChangeArray - 颜色变化配置数组，每个元素包含动画名称和颜色值数组
+         * @returns {void}
+         */
+        function colorChangeStyle(colorChangeArray) {
+            try {
+                const forEach_color = colorChangeArray; // 颜色动画的数组
+                let style_text = ''; // 输出的内容
+                if (forEach_color) { // 如果有颜色数组
+                    // 遍历颜色改变数组
+                    Object.entries(forEach_color).forEach(colorName => {
+                        // colorName0是名字
+                        // colorName1是颜色数组
+
+                        const colorArray = [];
+                        // 遍历每个变量名
+                        colorName[1].forEach(color => {
+                            colorArray.push(color);
+                        });
+                        const colorLength = colorArray.length;
+                        let useColor = '';
+                        // 构建关键帧动画的颜色变化部分
+                        for (let i = 0; i < colorLength; i++) {
+                            const colorPercent = (i / colorLength) * 100;
+                            useColor = useColor.concat(`${colorPercent.toFixed(0)}% {color:${colorArray[i]};}\n`);
+                        }
+                        useColor = useColor.concat(`100% {color:${colorArray[0]};}\n`);
+                        // 添加样式
+                        style_text = style_text.concat(`
+                            @keyframes colorChange-${colorName[0]}{
+                                ${useColor}
+                            }
+                        `);
+                    });
+                    return style_text;
+                }
+                else {
+                    console.error('特殊字体颜色配置失效！');
+                }
+            } catch (error) {
+                console.error('创建css时候出现严重问题!问题:', error);
+            }
         }
 
         // 更新面包屑导航

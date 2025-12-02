@@ -1922,8 +1922,8 @@ a:hover {
     margin: 1.8em 0;
     padding: 1em 1.5em;
     border-left: 4px solid #28a745;
-    background-color: #f8f9fa;
-    color: #495057;
+    background-color: var(--import-color);
+    color: var(--text-color);
     border-radius: 0 6px 6px 0;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
 }
