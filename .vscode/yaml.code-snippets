@@ -53,6 +53,14 @@
         "body": "description: ${1:简短描述}",
         "description": "添加文章简短描述"
     },
+    "默认topics":{
+        "scope": "yaml",
+        "prefix": "topic",
+        "body": [
+            "topic: ${1|mod-basics,env,items,npcsworld-gen,ui,networking,advanced|}"
+        ],
+        "description": "添加主题颜色配置(注意！exColor这一类变量名不能使用非英文字符,否则无法显示内容！)"
+    },
     "深浅颜色": {
         "scope": "yaml",
         "prefix": "colorLD",

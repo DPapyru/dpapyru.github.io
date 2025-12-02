@@ -3,12 +3,17 @@ title: 给新人的前言
 author: 小天使
 date: 2025-12-02
 last_updated: 2025-12-02
-category: 分类
-tags: ["入门","新人必看"]
+category: Modder入门
+tags: ["Modder入门", "新手必看"]
 difficulty: beginner
 time: 5分钟
-description: 给新人入坑的一些前言
+description: 新人要看一下前言
+prev_chapter: null
+next_chapter: null
+topic: mod-basics
 ---
+
+
 
 # 致谢
 
