@@ -1104,14 +1104,16 @@
                 console.warn('没有设置颜色转换变量!跳过颜色转换变量的设置!');
             else
                 colorChange = colorChangeStyle(colorChangeArray);
-
+            
+            const light = colorLD ? colorLD.light : '';
+            const dark = colorLD ? colorLD.dark : '';
             style.textContent = `
                         ${colorChange || ''}
                         :root{
-                            ${colorLD.light}
+                            ${light}
                         }
                         [data-theme="dark"]{
-                            ${colorLD.dark}
+                            ${dark}
                         }
                     `;
             document.head.appendChild(style);
