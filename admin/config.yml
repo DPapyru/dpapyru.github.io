@@ -1,0 +1,17 @@
+backend:
+  name: git-gateway
+  branch: main # 或 master
+
+media_folder: "assets/images" # 媒体文件存储路径
+public_folder: "/assets/images" # 媒体文件访问路径
+
+collections:
+  - name: "blog" # 集合名称
+    label: "Blog" # 在界面中显示的标签
+    folder: "_posts" # 内容存储文件夹
+    create: true # 允许创建新内容
+    slug: "{{year}}-{{month}}-{{day}}-{{slug}}" # 文件名格式
+    fields: # 字段定义
+      - {label: "Title", name: "title", widget: "string"}
+      - {label: "Publish Date", name: "date", widget: "datetime"}
+      - {label: "Body", name: "body", widget: "markdown"}
