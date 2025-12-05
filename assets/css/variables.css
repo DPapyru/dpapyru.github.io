@@ -85,6 +85,57 @@
   
   /* 主色调浅色版本 */
   --primary-light: rgba(40, 167, 69, 0.1);
+  
+  /* 文本颜色变量 - 用于彩色文本 */
+  --marked-text-color-primary: var(--primary-color);
+  --marked-text-color-secondary: var(--secondary-color);
+  --marked-text-color-accent: #ff9800;
+  --marked-text-color-success: var(--success-color);
+  --marked-text-color-warning: var(--warning-color);
+  --marked-text-color-error: var(--danger-color);
+  --marked-text-color-info: var(--info-color);
+  --marked-text-color-link: var(--link-color);
+  --marked-text-color-red: #ff0000;
+  --marked-text-color-green: #00ff00;
+  --marked-text-color-blue: #0000ff;
+  --marked-text-color-yellow: #ffff00;
+  --marked-text-color-purple: #800080;
+  --marked-text-color-orange: #ff8800;
+  --marked-text-color-cyan: #00ffff;
+  --marked-text-color-pink: #ff00ff;
+}
+
+/* 颜色动画定义 */
+@keyframes colorChange-rainbow {
+  0% { color: #ff0000; }
+  16.66% { color: #ff8800; }
+  33.33% { color: #ffff00; }
+  50% { color: #00ff00; }
+  66.66% { color: #0088ff; }
+  83.33% { color: #8800ff; }
+  100% { color: #ff0000; }
+}
+
+@keyframes colorChange-pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+
+@keyframes colorChange-blink {
+  0% { opacity: 1; }
+  25% { opacity: 0; }
+  50% { opacity: 1; }
+  75% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+@keyframes colorChange-gradient {
+  0% { color: #ff0000; }
+  25% { color: #ff8800; }
+  50% { color: #ffff00; }
+  75% { color: #00ff00; }
+  100% { color: #ff0000; }
 }
 
 /* 深色主题 */

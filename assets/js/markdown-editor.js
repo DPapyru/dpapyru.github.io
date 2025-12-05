@@ -13,7 +13,7 @@ class MarkdownEditor {
             autoSave: options.autoSave !== undefined ? options.autoSave : true,
             autoSaveDelay: options.autoSaveDelay || 3000,
             syncScroll: options.syncScroll !== undefined ? options.syncScroll : true,
-            configPath: options.configPath || '../docs/config.json',
+            configPath: options.configPath || 'config.json',
             ...options
         };
 
@@ -96,7 +96,52 @@ class MarkdownEditor {
             });
         } catch (error) {
             console.error('加载项目配置失败:', error);
-            throw error;
+            console.log('使用默认配置');
+            
+            // 提供默认配置，防止编辑器无法初始化
+            this.projectConfig = {
+                categories: {
+                    "基础": {
+                        title: "基础",
+                        topics: {
+                            "入门": {
+                                title: "入门",
+                                files: []
+                            }
+                        }
+                    },
+                    "中阶": {
+                        title: "中阶",
+                        topics: {
+                            "进阶": {
+                                title: "进阶",
+                                files: []
+                            }
+                        }
+                    },
+                    "高阶": {
+                        title: "高阶",
+                        topics: {
+                            "高级": {
+                                title: "高级",
+                                files: []
+                            }
+                        }
+                    }
+                },
+                topics: {},
+                authors: {}
+            };
+            
+            this.categories = this.projectConfig.categories;
+            this.topics = this.projectConfig.topics;
+            this.authors = this.projectConfig.authors;
+            
+            console.log('已加载默认配置', {
+                categories: Object.keys(this.categories).length,
+                topics: Object.keys(this.topics).length,
+                authors: Object.keys(this.authors).length
+            });
         }
     }
 
@@ -382,13 +427,9 @@ public class AdvancedTechnique : Mod
                 smartypants: true
             });
 
-            // 添加自定义扩展
-            if (typeof markdownRenderColorLD === 'function') {
-                marked.use({ extensions: [markdownRenderColorLD()] });
-            }
-            if (typeof markdownRenderColorChange === 'function') {
-                marked.use({ extensions: [markdownRenderColorChange()] });
-            }
+            // 添加自定义扩展 - 实现颜色渲染
+            marked.use({ extensions: [this.createColorExtension(), this.createColorChangeExtension()] });
+            console.log('颜色扩展已启用');
             
             // 添加项目特有的Markdown扩展
             this.initCustomMarkdownExtensions();
@@ -405,6 +446,100 @@ public class AdvancedTechnique : Mod
     }
 
     /**
+     * 创建颜色扩展
+     */
+    createColorExtension() {
+        return {
+            name: 'color',
+            level: 'inline',
+            start(src) {
+                // 检查是否是 {color:变量名} 开头
+                const colorMatch = src.match(/\{color:\s*([a-zA-Z0-9_-]+)\}/g);
+                return colorMatch ? colorMatch.index : -1;
+            },
+            tokenizer(src) {
+                const rule = /\{color:\s*([a-zA-Z0-9_-]+)\}\{([^{}]*)\}/g;
+                const match = src.match(rule);
+                if (match) {
+                    return {
+                        type: 'color',
+                        raw: src,
+                        allMatch: match
+                    };
+                }
+            },
+            renderer(token) {
+                if (token.type !== 'color')
+                    return;
+                const allMatch = token.allMatch;
+                let result = token.raw;
+                const rule = /\{color:\s*([a-zA-Z0-9_-]+)\}\{([^{}]*)\}/;
+                allMatch.forEach(item => {
+                    const match = item.match(rule);
+                    if (match) {
+                        const drawColor = match[1]; // 颜色
+                        const text = match[2]; // 文本
+
+                        const spanColor = `<span style="color: var(--marked-text-color-${drawColor});">${text}</span>`;
+                        result = result.replace(match[0], spanColor); // 替换原本内容
+                    }
+                    else {
+                        console.error('颜色匹配失败:', item);
+                    }
+                });
+                return result;
+            }
+        };
+    }
+
+    /**
+     * 创建颜色变化扩展
+     */
+    createColorChangeExtension() {
+        return {
+            name: 'colorChange',
+            level: 'inline',
+            start(src) {
+                // 检查是否是 {colorChange:变量名} 开头
+                const colorMatch = src.match(/\{colorChange:\s*([a-zA-Z0-9_-]+)\}/g);
+                return colorMatch ? colorMatch.index : -1;
+            },
+            tokenizer(src) {
+                const rule = /\{colorChange:\s*([a-zA-Z0-9_-]+)\}\{([^{}]*)\}/g;
+                const match = src.match(rule);
+                if (match) {
+                    return {
+                        type: 'colorChange',
+                        raw: src,
+                        allMatch: match
+                    };
+                }
+            },
+            renderer(token) {
+                if (token.type !== 'colorChange')
+                    return;
+                const allMatch = token.allMatch;
+                let result = token.raw;
+                const rule = /\{colorChange:\s*([a-zA-Z0-9_-]+)\}\{([^{}]*)\}/;
+                allMatch.forEach(item => {
+                    const match = item.match(rule);
+                    if (match) {
+                        const drawColor = match[1]; // 颜色
+                        const text = match[2]; // 文本
+
+                        const spanColor = `<span style="animation: colorChange-${drawColor} 2s infinite; display: inline-block;">${text}</span>`;
+                        result = result.replace(match[0], spanColor); // 替换原本内容
+                    }
+                    else {
+                        console.error('颜色动画匹配失败:', item);
+                    }
+                });
+                return result;
+            }
+        };
+    }
+
+    /**
      * 初始化自定义Markdown扩展
      */
     initCustomMarkdownExtensions() {
@@ -414,7 +549,7 @@ public class AdvancedTechnique : Mod
             level: 'inline',
             start(src) { return src.match(/\[\[([^\]]+)\]\]\(([^)]+)\)/); },
             tokenizer(src, tokens) {
-                const rule = /^\\[\\[([^\\]]+)\\]\\]\\(([^)]+)\\)/;
+                const rule = /^\[\[([^\]]+)\]\]\(([^)]+)\)/;
                 const match = rule.exec(src);
                 if (match) {
                     return {
@@ -443,9 +578,9 @@ public class AdvancedTechnique : Mod
         const enhancedCodeBlock = {
             name: 'enhancedCodeBlock',
             level: 'block',
-            start(src) { return src.match(/^```([a-zA-Z0-9_+-]*)?\\s*\\n/); },
+            start(src) { return src.match(/^```([a-zA-Z0-9_+-]*)?\s*\n/); },
             tokenizer(src, tokens) {
-                const rule = /^```([a-zA-Z0-9_+-]*)?\\s*\\n([\\s\\S]*?)\\n```\\s*$/;
+                const rule = /^```([a-zA-Z0-9_+-]*)?\s*\n([\s\S]*?)\n```\s*$/;
                 const match = rule.exec(src);
                 if (match) {
                     return {
@@ -1240,20 +1375,33 @@ public class AdvancedTechnique : Mod
      * 更新预览
      */
     updatePreview() {
-        if (!this.previewElement || typeof marked === 'undefined') return;
+        if (!this.previewElement || typeof marked === 'undefined') {
+            console.log('预览元素或marked库未找到，跳过预览更新');
+            return;
+        }
 
         try {
+            console.log('开始更新预览...');
             const content = this.editor.getValue();
+            console.log('获取编辑器内容成功，长度:', content.length);
+            
             const html = marked.parse(content);
+            console.log('Markdown解析成功');
+            
             this.previewElement.innerHTML = html;
+            console.log('预览内容已设置');
 
             // 应用代码高亮
             if (typeof Prism !== 'undefined') {
                 Prism.highlightAllUnder(this.previewElement);
+                console.log('代码高亮已应用');
+            } else {
+                console.log('Prism库未找到，跳过代码高亮');
             }
 
             // 初始化图片缩放
             this.initImageZoom();
+            console.log('图片缩放功能已初始化');
         } catch (error) {
             console.error('更新预览失败:', error);
             this.previewElement.innerHTML = `<div class="error">预览渲染失败: ${error.message}</div>`;
@@ -1381,7 +1529,7 @@ public class AdvancedTechnique : Mod
         const line = doc.getLine(cursor.line);
         
         // 检查当前行是否已经是标题
-        const headingMatch = line.match /^(#+)\s*(.*)$/;
+        const headingMatch = line.match(/^(#+)\s*(.*)$/);
         if (headingMatch) {
             const currentLevel = headingMatch[1].length;
             const newLevel = currentLevel >= 6 ? 1 : currentLevel + 1;
@@ -2239,10 +2387,6 @@ public class AdvancedTechnique : Mod
         overlay.appendChild(img);
         document.body.appendChild(overlay);
     }
-}
-
-// 导出类供全局使用
-window.MarkdownEditor = MarkdownEditor;
     /**
      * 显示成功消息
      */
@@ -2673,7 +2817,8 @@ window.MarkdownEditor = MarkdownEditor;
      * 插入彩色文本
      */
     insertColorText() {
-        const colors = [
+        // 静态颜色选项
+        const staticColors = [
             { name: '红色', value: 'red' },
             { name: '绿色', value: 'green' },
             { name: '蓝色', value: 'blue' },
@@ -2682,6 +2827,26 @@ window.MarkdownEditor = MarkdownEditor;
             { name: '橙色', value: 'orange' },
             { name: '青色', value: 'cyan' },
             { name: '粉色', value: 'pink' }
+        ];
+        
+        // 变量颜色选项（与main.js中的CSS变量对应）
+        const variableColors = [
+            { name: '主要文本', value: 'primary' },
+            { name: '次要文本', value: 'secondary' },
+            { name: '强调文本', value: 'accent' },
+            { name: '成功文本', value: 'success' },
+            { name: '警告文本', value: 'warning' },
+            { name: '错误文本', value: 'error' },
+            { name: '信息文本', value: 'info' },
+            { name: '链接文本', value: 'link' }
+        ];
+        
+        // 动画颜色选项
+        const animatedColors = [
+            { name: '彩虹动画', value: 'rainbow', animated: true },
+            { name: '脉冲动画', value: 'pulse', animated: true },
+            { name: '闪烁动画', value: 'blink', animated: true },
+            { name: '渐变动画', value: 'gradient', animated: true }
         ];
         
         // 创建颜色选择对话框
@@ -2694,13 +2859,43 @@ window.MarkdownEditor = MarkdownEditor;
                     <button class="dialog-close" id="close-color-dialog">&times;</button>
                 </div>
                 <div class="dialog-body">
-                    <div class="color-picker">
-                        ${colors.map(color =>
-                            `<div class="color-option" data-color="${color.value}"
-                                 style="background-color: ${color.value};"
-                                 title="${color.name}"></div>`
-                        ).join('')}
+                    <div class="color-tabs">
+                        <button class="color-tab active" data-tab="variables">变量颜色</button>
+                        <button class="color-tab" data-tab="static">静态颜色</button>
+                        <button class="color-tab" data-tab="animated">动画颜色</button>
                     </div>
+                    
+                    <div class="color-tab-content active" id="variables-tab">
+                        <div class="color-picker">
+                            ${variableColors.map(color =>
+                                `<div class="color-option" data-color="${color.value}"
+                                     style="background-color: var(--marked-text-color-${color.value});"
+                                     title="${color.name}"></div>`
+                            ).join('')}
+                        </div>
+                    </div>
+                    
+                    <div class="color-tab-content" id="static-tab">
+                        <div class="color-picker">
+                            ${staticColors.map(color =>
+                                `<div class="color-option" data-color="${color.value}"
+                                     style="background-color: ${color.value};"
+                                     title="${color.name}"></div>`
+                            ).join('')}
+                        </div>
+                    </div>
+                    
+                    <div class="color-tab-content" id="animated-tab">
+                        <div class="color-picker">
+                            ${animatedColors.map(color =>
+                                `<div class="color-option animated" data-color="${color.value}"
+                                     data-animated="${color.animated}"
+                                     style="background: linear-gradient(45deg, #ff0000, #00ff00, #0000ff);"
+                                     title="${color.name}"></div>`
+                            ).join('')}
+                        </div>
+                    </div>
+                    
                     <div class="form-group" style="margin-top: 16px;">
                         <label for="color-text-input">文本内容</label>
                         <input type="text" id="color-text-input" class="form-input"
@@ -2717,26 +2912,47 @@ window.MarkdownEditor = MarkdownEditor;
         document.body.appendChild(dialog);
         dialog.classList.add('active');
         
-        let selectedColor = colors[0].value;
+        let selectedColor = variableColors[0].value;
+        let isAnimated = false;
         
         // 绑定事件
         const closeBtn = document.getElementById('close-color-dialog');
         const cancelBtn = document.getElementById('cancel-color');
         const confirmBtn = document.getElementById('confirm-color');
         const textInput = document.getElementById('color-text-input');
-        const colorOptions = dialog.querySelectorAll('.color-option');
+        const tabs = dialog.querySelectorAll('.color-tab');
+        const tabContents = dialog.querySelectorAll('.color-tab-content');
         
-        // 选择颜色
-        colorOptions.forEach(option => {
-            option.addEventListener('click', () => {
-                colorOptions.forEach(opt => opt.classList.remove('selected'));
-                option.classList.add('selected');
-                selectedColor = option.getAttribute('data-color');
+        // 标签切换
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => t.classList.remove('active'));
+                tabContents.forEach(c => c.classList.remove('active'));
+                
+                tab.classList.add('active');
+                const tabId = tab.getAttribute('data-tab') + '-tab';
+                document.getElementById(tabId).classList.add('active');
             });
         });
         
+        // 选择颜色
+        const setupColorOptions = (container) => {
+            const colorOptions = container.querySelectorAll('.color-option');
+            colorOptions.forEach(option => {
+                option.addEventListener('click', () => {
+                    colorOptions.forEach(opt => opt.classList.remove('selected'));
+                    option.classList.add('selected');
+                    selectedColor = option.getAttribute('data-color');
+                    isAnimated = option.getAttribute('data-animated') === 'true';
+                });
+            });
+        };
+        
+        // 为所有标签页设置颜色选择
+        tabContents.forEach(setupColorOptions);
+        
         // 默认选中第一个颜色
-        colorOptions[0].classList.add('selected');
+        document.querySelector('#variables-tab .color-option').classList.add('selected');
         
         const closeDialog = () => {
             dialog.classList.remove('active');
@@ -2753,11 +2969,19 @@ window.MarkdownEditor = MarkdownEditor;
             
             // 插入彩色文本标记
             const doc = this.editor.getDoc();
-            doc.replaceSelection(`<color=${selectedColor}>${text}</color>`);
+            let colorMarkup;
+            
+            if (isAnimated) {
+                colorMarkup = `{colorChange:${selectedColor}}{${text}}`;
+            } else {
+                colorMarkup = `{color:${selectedColor}}{${text}}`;
+            }
+            
+            doc.replaceSelection(colorMarkup);
             this.editor.focus();
             
-            closeDialog();
-            this.showSuccessMessage(`已插入${colors.find(c => c.value === selectedColor).name}文本`);
+            const colorType = isAnimated ? '动画' : '变量';
+            this.showSuccessMessage(`已插入${colorType}颜色文本`);
         });
     }
 
@@ -3736,3 +3960,7 @@ window.MarkdownEditor = MarkdownEditor;
         
         return `${filename}.md`;
     }
+}
+
+// 导出类供全局使用
+window.MarkdownEditor = MarkdownEditor;

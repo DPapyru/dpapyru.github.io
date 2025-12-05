@@ -1055,6 +1055,54 @@
     box-shadow: 0 0 0 2px rgba(var(--primary-rgb, 33, 150, 243), 0.2);
 }
 
+.color-option.animated {
+    background: linear-gradient(45deg, #ff0000, #00ff00, #0000ff);
+    background-size: 200% 200%;
+    animation: gradientShift 2s ease infinite;
+}
+
+@keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+/* 颜色标签页样式 */
+.color-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 12px;
+}
+
+.color-tab {
+    padding: 8px 16px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-secondary);
+    font-weight: 500;
+    border-bottom: 2px solid transparent;
+    transition: var(--transition-fast);
+}
+
+.color-tab:hover {
+    color: var(--text-color);
+    background-color: var(--bg-hover);
+}
+
+.color-tab.active {
+    color: var(--primary-color);
+    border-bottom-color: var(--primary-color);
+}
+
+.color-tab-content {
+    display: none;
+}
+
+.color-tab-content.active {
+    display: block;
+}
+
 /* tModLoader API 引用对话框样式 */
 .tmodloader-ref-dialog {
     position: fixed;
