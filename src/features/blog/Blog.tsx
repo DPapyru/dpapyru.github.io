@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import styles from "./Blog.module.css";
 import blogIndex from "../../../public/blog-index.json";
+import { Search } from "../search";
 
 /**
  * 博客文章板块 —— 列表页。
@@ -25,6 +26,8 @@ export function Blog() {
           </li>
         ))}
       </ul>
+      {/* 站内搜索入口 + 占位 UI(ticket #17);真实 BM25 检索由后续 ticket 实现 */}
+      <Search />
     </main>
   );
 }

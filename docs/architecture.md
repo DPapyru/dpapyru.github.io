@@ -100,6 +100,18 @@ src/
   - public/demos/demo-anim-rotating-square.js — 旋转方块(矩阵主题:2D 旋转×缩放仿射变换)。
   - public/demos/demo-anim-vector-field.js — 向量场(向量主题:网格采样点画箭头,场随时间摆动)。
 
+## HLSL→GLSL 转译与 ShaderStage(rendering)
+
+- **归属**:置于 `src/features/rendering/`,是 ADR-0002 提取的 shader-hlsl-adapter 能力(#12)。转译思路借鉴参考源码(gh-tml shader-hlsl-adapter.js),但为 TS strict / 零第三方运行时依赖重写实现,不复制其代码。
+- **转译核心**(`hlslToGLSL.ts`,纯函数、接缝 2):输入 `.fx` 源码字符串 → 输出 GLSL 300 es 顶点/片段源码。公开 API:
+  - `translateFragmentSource(fx, { vertexColorVarying? })` — 片段;支持 `void mainImage(out float4 fragColor, float2 fragCoord)` 与 `float4 MainPS(float2 : TEXCOORD0) : COLOR0` 两种入口,包装进 `main()` 并注入运行时 uniform。
+  - `translateVertexSource(fx, { vertexEntry? })` — 顶点(`MainVS(...)`,返回 float4),把像素出口坐标换算为裁剪坐标 `gl_Position`。
+  - `translateProgramSource(fx, { vertexEntry? })` — 一次产出顶点 + 片段;均返回 `{ ok: true; source }` 或 `{ ok: false; error }`(错误携带明确中文信息)。
+  - 导出 `RUNTIME_UNIFORM_LINES`(iTime/iResolution/iChannel0-3 等运行时 uniform)、`RUNTIME_UNIFORM_NAMES`、兜底 `FALLBACK_FRAGMENT`/`FALLBACK_VERTEX`。
+- **转译规则**:①剥除 `technique`/`pass` 与 register/语义冒号标注;②类型改写 `float4→vec4`、`half/fixed/min16float→float`、`float4x4→mat4`、`int2/uint2/bool2→ivec2/uvec2/bvec2`、`Texture2D→sampler2D` 等;③内置函数改写 `lerp→mix`、`frac→fract`、`rsqrt→inversesqrt`、`ddx/ddy→dFdx/dFdy`、`fmod→mod`、`mad→(a*b+c)`、`rcp→1.0/x`、`clip→discard`、`mul→(a*b)`、`tex2D*→texture*`(含 UV 翻转);④顶层自由变量提升为 `uniform`(已注入的运行时名除外)。
+- **ShaderStage 运行时**(`shaders/shaderStageRuntime.ts`):固定全屏过场顶点 + 转译片段,编译链接后每帧更新 uniform 并以索引绘制。公开:`buildProgram(gl, vs, fs)`(编译/链接,返回句柄与 uniform 位置或错误)、`renderFrame(gl, handles, uniformLocations, { time, delta, frame, width, height })`(一帧:viewport + 更新 uResolution/uTime/iResolution/iTime/iTimeDelta/iFrame + drawElements,返回 uniform 上传快照供测试观测)。依赖结构接口 `ShaderStageGL`(与 `useWebGLMesh` 的 `WebGLMeshContext` 同思路):生产传真实 `WebGL2RenderingContext`,测试传 mock。
+- **组件**(`ShaderStage.tsx` + `ShaderStage.module.css`):`<ShaderStage source={fx} />` 挂载后自动转译→编译→实时渲染;`createContext?` 支持注入 WebGL 上下文(mock/未来后端);转译/编译/上下文任一失败均在 canvas 上叠加**明确错误提示**(不静默)。卸载或换源自动停止帧循环。
+- **可测接缝(接缝 2)**:`hlslToGLSL.test.ts` 断言给定 `.fx` 的入口/类型改写/uniform 注入输出;`shaders/shaderStageRuntime.test.ts` 用录制型 mock GL 断言 uniform 更新与绘制;`ShaderStage.test.tsx` 用 RTL + mock WebGL 挂载断言成功渲染与三阶段错误分支。
 ## 样式与主题约定
 
 - 组件样式用 **CSS Modules**(`*.module.css`),通过 `import styles from "./X.module.css"` 使用。
@@ -119,7 +131,7 @@ src/
 - 测试策略:只测**模块公开 API 的外部行为**(输入→输出),不测内部实现细节。
 - 可测的接缝:
   - **接缝 1 — 内容管线**(`src/features/blog/blogIndex.ts`):markdown front matter 解析、博客索引构建。
-  - **接缝 2 — 渲染运行时**(`shared/capabilities`):着色标记、Callout、协议嵌入的解析/渲染,以及 geometry 数学库的输入→输出断言。
+  - **接缝 2 — 渲染运行时**(`shared/capabilities` + `features/rendering`):着色标记、Callout、协议嵌入的解析/渲染,geometry 数学库的输入→输出断言,以及 HLSL→GLSL 转译、ShaderStage 渲染循环的输入→输出断言。
 - 测试与实现**同批提交**。
 
 ## 构建产物约定
