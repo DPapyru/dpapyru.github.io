@@ -1,0 +1,18 @@
+.stage {
+  position: relative;
+  width: 100%;
+  /* 提供占位高度,缺省由 props height 覆盖 */
+  min-height: 240px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #10131a;
+  container-type: inline-size;
+}
+
+.canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 480px;
+  aspect-ratio: 16 / 9;
+}

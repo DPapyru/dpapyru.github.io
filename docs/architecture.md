@@ -46,6 +46,19 @@ src/
 - **解析/构建纯函数**:`src/features/blog/blogIndex.ts` 导出 `BlogPostMeta`、`BlogIndexEntry`、`BlogSourceFile` 类型与 `parseBlogPost`、`buildBlogIndex`(内容管线接缝 #1,纯函数式、可单测)。
 - **列表页**:`src/features/blog/Blog.tsx` 直接 `import` `public/blog-index.json`,由索引驱动渲染每篇文章的卡片(标题/日期/摘要),链接到 `/blog/:slug`(详情页由 #7 提供)。
 
+## 站内搜索(services/search)
+
+> 命名沿目录树中的 `features/search/`;此处“services/”仅表意“站内检索能力”,实际目录为 `src/features/search/`。
+
+- **归属**:置于 `src/features/search/`,站内搜索入口 + 类型契约(ticket #17)。本期**只实现入口与占位 UI,不实现真实检索**;BM25 全文搜索由后续 ticket 按同一契约实现。
+- **类型契约**(`search.ts`):
+  - `SearchQuery { term: string }` — 查询入参;入口先 trim 并忽略空串,保证后续实现拿到干净查询。
+  - `SearchResult { title: string; url: string; snippet?: string }` — 一条结果;`url` 为站内路由路径(如 `/blog/:slug`),`snippet` 为可选命中摘要。
+  - `SearchFn = (query: SearchQuery) => SearchResult[]` — 真实检索实现的接缝签名,占位阶段不实现,仅锁定形状。
+- **占位 UI**(`<Search />`):输入框 + 搜索按钮,提交后回显「搜索功能开发中,后续将实现 BM25 全文搜索」提示;不执行真实检索。
+- **挂载入口**:博客列表页 `Blog.tsx` 在文章列表下方挂载 `<Search />`(ticket #17)。
+- **测试**:占位 UI 渲染(输入框/按钮/提示回显/空查询不提示)与契约类型可编译(`search.test.tsx`)。
+
 ## 渲染数学库(shared/capabilities/geometry)
 
 - **归属**:置于共享层 `shared/capabilities/geometry`,作为渲染运行时能力(接缝 2)——ADR-0002 把几何数学(Vec/Mat)归入渲染能力;rendering feature 的 WebGL 顶点绘制与动画运行时均需复用,故下沉到共享层。
@@ -65,6 +78,27 @@ src/
   - 类型:`MeshVertexArrays`(positions n*3 / colors n*4 / uvs n*2 / indices Uint16|Uint32)、`WebGLMeshContext`(可注入的最小 WebGL 上下文结构接口,生产传真实 `WebGL2RenderingContext`,测试传 mock)、`RenderMeshHandle`。
   - WebGL 常量(`GL_ARRAY_BUFFER` 等)亦以此为导出,便于 mock 断言。
 - **可测接缝**:WebGL 上下文以 `WebGLMeshContext` 结构接口注入,测试用记录调用的 mock 断言 VAO/VBO/IBO、blend state、`drawElements` 与打包布局输入→输出(`useWebGLMesh.test.ts`)。
+
+## AnimCanvas 动画运行时(rendering/AnimCanvas)
+
+- **归属**:置于 `src/features/rendering/AnimCanvas/`,把 ADR-0002 提取的 animts 动画运行时 React 化(#13)。机制借鉴自参考源码(gh-tml animts-runtime.js),但为其设计独立、更简洁的**函数式/声明式脚本格式**,不复制其代码。
+- **组件**:`<AnimCanvas script={...} />` 挂载后即可运行动画。关键点:
+  - **canvas 与解析器可注入(props)**:
+    - `resolver?`(AnimScriptResolver)— 动画解析器,把传入的 `script`(一个"规格")解析成 AnimScript。缺省恒等映射(传入对象本身就是 AnimScript);测试可注入 mock,后续协议嵌入可注入"按 URL 拉取并 import"的解析器。
+    - `canvasApiFactory?` — `(canvas) => CanvasApi` 的工厂,缺省用 Canvas2D 实现(`createCanvas2d`);测试或后端替换可注入 fake。canvas 本身由组件在挂载时创建,插入容器。
+    - `width`/`height` — 可选固定画布尺寸(px),缺省自适应容器。
+  - **生命周期**:挂载创建 player 并 `start()`,卸载 `dispose()`(停止帧循环并调用脚本 dispose)。
+- **动画脚本格式(AnimScript)** — 函数式/声明式,四个可选钩子组成的纯数据对象,由 player 在帧循环中驱动:
+  - `setup(ctx) → state` — 初始化,返回可变的脚本状态。
+  - `update(state, delta, ctx)` — 每帧更新,`delta` 为距上一帧的秒数。
+  - `render(state, g, ctx)` — 每帧绘制,`g` 为注入的 CanvasApi。
+  - `dispose(state)` — 销毁清理(释放监听器/定时器)。
+- **CanvasApi(渲染门面)**:向下层渲染后端(如 Canvas2D)的无损门面,坐标用 Vec2 表达,便于与共享层 geometry 协同。原语:`clear(color)`、`rect(cx,w,h,style)`、`line(from,to,style)`、`arrow(from,to,style)`、`circle(cx,r,style)`;暴露 `width`/`height` 供脚本自适应布局。
+- **player(runtime.ts)**:createPlayer({ canvasApi, context, script, requestFrame?, cancelFrame? }) 创建一场动画的执行器,暴露 start/stop/dispose/frame 与可同步驱动的 tick(tsMs)(便于测试注入 fake 的 RAF、按帧驱动)。时间语义:tick 输入时间戳(ms)换算为 time(s)与 delta(s)。
+- **可测接缝(接缝 2)**:runtime.test.ts 用"录制型 fake CanvasApi"+ 同步 tick 断言帧循环外部行为(update→render 顺序、time/delta/frame、state 共享、dispose 清理、start/stop/dispose 防重入);AnimCanvas.test.tsx 用 RTL 断言组件挂载后有 canvas、resolver/canvasApiFactory 注入生效、卸载调用 dispose。
+- **演示动画(demo 素材)**:放 public/demos/,为独立的自包含 ES 模块(不 import src/,因其会被作为静态资源加载),esm default 导出同 AnimScript 格式。作为内容素材与测试夹具,后续协议嵌入(anims:)ticket 可通过 resolver 拉取并 import()。当前提供 2 支:
+  - public/demos/demo-anim-rotating-square.js — 旋转方块(矩阵主题:2D 旋转×缩放仿射变换)。
+  - public/demos/demo-anim-vector-field.js — 向量场(向量主题:网格采样点画箭头,场随时间摆动)。
 
 ## 样式与主题约定
 
