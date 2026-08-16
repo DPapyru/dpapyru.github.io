@@ -3,12 +3,15 @@ import { MemoryRouter } from "react-router-dom";
 import { describe, it, expect } from "vitest";
 import { Header } from "./Header";
 import { AppRoutes } from "../../../App";
+import { ThemeProvider } from "../../../features/theme";
 
 function renderWithRouter(initialPath: string) {
   return render(
-    <MemoryRouter initialEntries={[initialPath]}>
-      <Header />
-    </MemoryRouter>,
+    <ThemeProvider>
+      <MemoryRouter initialEntries={[initialPath]}>
+        <Header />
+      </MemoryRouter>
+    </ThemeProvider>,
   );
 }
 

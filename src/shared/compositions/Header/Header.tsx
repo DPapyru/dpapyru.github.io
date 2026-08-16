@@ -1,4 +1,5 @@
 import { NavLink } from "react-router-dom";
+import { ThemeToggle } from "../../../features/theme";
 import styles from "./Header.module.css";
 
 type NavItem = {
@@ -16,7 +17,7 @@ const NAV_ITEMS: NavItem[] = [
 /**
  * 站点顶部导航 — 跨板块共享,置于共享层 compositions。
  * 用 NavLink 呈现当前板块选中态(aria-current="page")。
- * 预留主题切换(ThemeToggle)挂载位,theme feature 提供后可直接复用。
+ * 右侧挂载 theme feature 的 ThemeToggle:即时切换明/暗 + accent 预设(不持久化)。
  */
 export function Header() {
   return (
@@ -38,8 +39,9 @@ export function Header() {
           ))}
         </ul>
       </nav>
-      {/* ThemeToggle 挂载位:theme feature 提供后在此挂载 */}
-      <div className={styles.themeSlot} data-testid="theme-toggle-slot" />
+      <div className={styles.themeSlot}>
+        <ThemeToggle />
+      </div>
     </header>
   );
 }

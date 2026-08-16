@@ -1,17 +1,84 @@
+/* ============================================================
+  全局主题令牌
+  组件样式(CSS Modules)一律消费这些 CSS 变量,不写死颜色。
+  theme feature 把 data-theme(light/dark)与 data-accent(blue/emerald/rose)
+  写到 <html> 根元素,这里据此切换令牌取值、即时生效。
+============================================================ */
+
+/* 基础令牌与兜底:默认按 light 取值;无 JS 时依系统偏好做 dark 兜底。 */
 :root {
   color-scheme: light dark;
-  --text-primary: #222;
-  --text-secondary: #555;
-  --bg: #fff;
+  --bg: #ffffff;
+  --surface: #f4f5f7;
+  --text-primary: #1f2937;
+  --text-secondary: #5b6472;
+  --border: #e2e6ec;
+  --accent: #2563eb;
+  --accent-contrast: #ffffff;
+  --accent-soft: #dbeafe;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --text-primary: #e6e6e6;
-    --text-secondary: #aaa;
+    color-scheme: dark;
     --bg: #1a1a1a;
+    --surface: #242526;
+    --text-primary: #e6e6e6;
+    --text-secondary: #a3a8b0;
+    --border: #33363d;
+    --accent: #60a5fa;
+    --accent-soft: #1e3a5f;
   }
 }
+
+/* 显式 data-theme 覆盖系统偏好,交给用户在页面内切换。 */
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #ffffff;
+  --surface: #f4f5f7;
+  --text-primary: #1f2937;
+  --text-secondary: #5b6472;
+  --border: #e2e6ec;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #1a1a1a;
+  --surface: #242526;
+  --text-primary: #e6e6e6;
+  --text-secondary: #a3a8b0;
+  --border: #33363d;
+}
+
+/* data-accent 预设:主色与淡底在明/暗下各配一档。 */
+:root[data-accent="blue"] {
+  --accent: #2563eb;
+  --accent-soft: #dbeafe;
+}
+:root[data-theme="dark"][data-accent="blue"] {
+  --accent: #60a5fa;
+  --accent-soft: #1e3a5f;
+}
+:root[data-accent="emerald"] {
+  --accent: #059669;
+  --accent-soft: #d1fae5;
+}
+:root[data-theme="dark"][data-accent="emerald"] {
+  --accent: #34d399;
+  --accent-soft: #064e3b;
+}
+:root[data-accent="rose"] {
+  --accent: #e11d48;
+  --accent-soft: #ffe4e6;
+}
+:root[data-theme="dark"][data-accent="rose"] {
+  --accent: #fb7185;
+  --accent-soft: #4c0519;
+}
+
+/* ============================================================
+  基础重置与排版
+============================================================ */
 
 * {
   box-sizing: border-box;

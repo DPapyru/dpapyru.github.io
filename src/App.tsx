@@ -1,4 +1,5 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { ThemeProvider } from "./features/theme";
 import { About } from "./features/about/About";
 import { Blog } from "./features/blog/Blog";
 import { Contact } from "./features/contact/Contact";
@@ -11,7 +12,7 @@ import { NotFound } from "./shared/compositions/NotFound/NotFound";
  */
 export function AppRoutes() {
   return (
-    <>
+    <ThemeProvider>
       <Header />
       <Routes>
         <Route path="/" element={<About />} />
@@ -19,7 +20,7 @@ export function AppRoutes() {
         <Route path="/contact" element={<Contact />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
-    </>
+    </ThemeProvider>
   );
 }
 
