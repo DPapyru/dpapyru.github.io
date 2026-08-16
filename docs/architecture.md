@@ -188,6 +188,13 @@ src/
 - **构建期 SEO 脚本**(`scripts/build-seo.ts`,`bun run build:seo`):读取 `public/blog-index.json` 的 slug,拼出已知 URL(`/`、`/blog`、每个 `/blog/:slug`),用 `buildSitemapXml`/`buildRobotsTxt` 生成 `public/sitemap.xml` 与 `public/robots.txt`。`bun run build` 在 vite build 前先跑 `build:content && build:seo`,保证每次部署带上最新站点地图。
 - **测试**:`Seo.test.tsx` 断言 jsdom 下 `document.title` 与 meta(含卸载清理);`sitemap.test.ts` 断言 `buildSitemapXml`/`buildRobotsTxt`/`blogSlugPaths` 的输入→输出。
 
+## 协议嵌入(cs:/anims:/fx:)
+
+- **插件**(shared/capabilities/markdown/protocol-embed.ts):独占一段的行指令 cs:<path> / anims:<path> / fx:<path>;cs: 经构建期 import.meta.glob(?raw)内联 public/ 素材并以带 language-* 类的代码块展示;anims:/fx: 产占位节点(带 data-protocol/data-path 属性),真实渲染由 #17 的 ProtocolRender 接管。
+- **路径约定**:站点内相对路径,即 public/ 下的路径(如 code/demo.ts、demos/fna-vertex-demo.fx)。
+- **接线**:BlogPost 经 MarkdownRenderer 的 remarkPlugins 注入 protocolEmbed()。
+- **测试**:protocol-embed.test.tsx 断言 cs: 拉取展示(注入 mock 加载器)、anims:/fx: 占位节点、各降级不抛错。
+
 ## 提交门槛
 
 合入前必须通过:

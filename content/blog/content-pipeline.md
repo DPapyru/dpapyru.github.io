@@ -26,3 +26,9 @@ export function add(a: number, b: number): number {
 ```
 
 用 [[accent]]强调[[/accent]] 来让重点更醒目。
+
+### 协议嵌入示例
+
+下面这行指令会在渲染期把 code/demo.ts 拉取并以代码块展示:
+
+cs:code/demo.ts

@@ -1,0 +1,71 @@
+/**
+ * 协议嵌入样式(ticket #11)。
+ * 这些类由 protocol-embed.ts 的 remark 插件直接写入 HAST 的 className(普通字符串,不
+ * 经 CSS Modules 哈希),故必须用 :global 包起来才能在全局层命中(与 callout / highlight 同思路)。
+ *
+ * .protocol-embed 统一卡片外观;cs: 代码块复用 MarkdownRenderer 的 .markdown pre 底子并加
+ * 头栏;anims:/fx: 本期为占位节点,用虚线框 + 图标文字示意,真实渲染由 #17 接管。
+ * 配色消费主题 CSS 变量(--surface/--border/--text-*),随 data-theme 切换明/暗档。
+ */
+
+:global(.protocol-embed) {
+  margin: 1em 0;
+  border: 1px solid var(--border, #e2e6ec);
+  border-radius: 0.5rem;
+  overflow: hidden;
+  background: var(--surface, #f4f5f7);
+}
+
+:global(.protocol-head) {
+  display: flex;
+  align-items: center;
+  gap: 0.6em;
+  padding: 0.4em 0.9em;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.78rem;
+  border-bottom: 1px solid var(--border, #e2e6ec);
+  background: color-mix(in srgb, var(--surface, #f4f5f7) 80%, var(--bg, #ffffff));
+}
+
+:global(.protocol-kind) {
+  font-weight: 700;
+  color: var(--accent, #2563eb);
+}
+
+:global(.protocol-path) {
+  color: var(--text-secondary, #5b6472);
+  word-break: break-all;
+}
+
+:global(.protocol-code) {
+  margin: 0;
+  border: none;
+  border-radius: 0;
+  background: var(--bg, #ffffff);
+}
+:global(.protocol-code) code {
+  display: block;
+  padding: 0.9em 1em;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.85rem;
+  line-height: 1.55;
+  overflow-x: auto;
+}
+
+:global(.protocol-placeholder) {
+  padding: 1em 0.9em;
+  font-size: 0.875rem;
+  color: var(--text-secondary, #5b6472);
+  border: 1px dashed var(--border, #cdd3dc);
+  border-radius: 0.35rem;
+  margin: 0.7em;
+}
+
+:global(.protocol-error-text) {
+  color: var(--callout-caution, #dc2626);
+}
+
+/* 暗色档:代码块底随主题切换(与 highlight-theme.css 的 .hljs 前景色配套)。 */
+:root[data-theme="dark"] :global(.protocol-code) {
+  background: #0d1117;
+}
