@@ -1,0 +1,16 @@
+.page {
+  max-width: 46rem;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+.title {
+  font-size: 2rem;
+  line-height: 1.2;
+}
+
+.lead {
+  margin-top: 0.5rem;
+  font-size: 1.125rem;
+  color: var(--text-secondary, #555);
+}

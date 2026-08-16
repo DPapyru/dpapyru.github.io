@@ -70,6 +70,17 @@ src/
 - GitHub Pages 通过 `actions/upload-pages-artifact@v3` 上传 `dist/` 并 `actions/deploy-pages@v4` 部署。
 - `dist/`、`node_modules/` 不纳入版本控制(见 `.gitignore`)。
 
+## 路由约定
+
+- 依赖:**react-router-dom**(v7,`<BrowserRouter>` + `<Routes>`),路由由 #4 ticket 引入。
+- 入口:`src/main.tsx` -> `src/App.tsx`。`App` 内挂 `BrowserRouter` 并渲染 `<AppRoutes/>`;路由表集中在 `AppRoutes`,板块与 URL 一一对应:
+  - `/`(默认)->「关于我」
+  - `/blog` -> 博客占位页
+  - `/contact` -> 联系方式占位页
+  - `*` -> 404 占位(`shared/compositions/NotFound`;设计化 404 由 #18 负责)
+- **顶部导航**:跨板块共享,置于 `shared/compositions/Header`,用 `NavLink` 呈现当前板块选中态(`aria-current="page"`);它预留 ThemeToggle 挂载位(theme feature 提供后挂载)。
+- 测试:`AppRoutes` 导出以便用 `MemoryRouter` 包裹做路由渲染测试(点击切换、active 态、404、直达)。
+
 ## 提交门槛
 
 合入前必须通过:
