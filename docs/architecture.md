@@ -47,7 +47,6 @@ src/
 - **解析/构建纯函数**:`src/features/blog/blogIndex.ts` 导出 `BlogPostMeta`、`BlogIndexEntry`、`BlogSourceFile` 类型与 `parseBlogPost`、`buildBlogIndex`(内容管线接缝 #1,纯函数式、可单测)。
 - **列表页**:`src/features/blog/Blog.tsx` 直接 `import` `public/blog-index.json`,由索引驱动渲染每篇文章的卡片(标题/日期/摘要),链接到 `/blog/:slug`(详情页由 #7 提供)。
 
-
 ## Markdown 渲染管线(shared/capabilities/markdown)
 
 - **归属**:置于共享层 `shared/capabilities/markdown`,是跨功能模块复用的渲染能力——文章详情页(`BlogPost`)正文以它渲染(#8)。
@@ -58,7 +57,6 @@ src/
 - **可测接缝(接缝 1)**:`MarkdownRenderer.test.tsx` 断言公开 API 外显行为(GFM 表格结构、任务列表 checkbox、代码块含 `hljs`/`language-*` 类与词法类、插件注入缝)。
 - **接入**:`src/features/blog/BlogPost.tsx` 经 `loadPost/parsePostFull` 接缝(#7)取到 `{meta, body}`,把 `body` 传给 `MarkdownRenderer`;渲染层替换不改变加载器签名。
 
-## 站内搜索(services/search)
 ## 站内搜索(services/search)
 
 > 命名沿目录树中的 `features/search/`;此处“services/”仅表意“站内检索能力”,实际目录为 `src/features/search/`。

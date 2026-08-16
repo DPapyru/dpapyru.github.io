@@ -1,3 +1,5 @@
+import { Seo } from "../../shared/capabilities/seo/Seo";
+import { pageTitle } from "../../shared/capabilities/seo/site";
 import styles from "./About.module.css";
 
 /**
@@ -7,6 +9,7 @@ import styles from "./About.module.css";
 export function About() {
   return (
     <main className={styles.about}>
+      <Seo title={pageTitle("关于我")} path="/" description="DPapyru 的个人主页 — 关于我。" />
       <h1 className={styles.title}>关于我</h1>
       <p className={styles.lead}>这里是 DPapyru 的个人主页。</p>
     </main>

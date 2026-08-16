@@ -6,8 +6,9 @@
   "description": "DPapyru 的个人主页 - 托管于 GitHub Pages 的 React 单页应用",
   "scripts": {
     "dev": "vite",
-    "build": "bun run build:content && tsc --noEmit && vite build",
+    "build": "bun run build:content && bun run build:seo && tsc --noEmit && vite build",
     "build:content": "bun scripts/build-content.ts",
+    "build:seo": "bun scripts/build-seo.ts",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"

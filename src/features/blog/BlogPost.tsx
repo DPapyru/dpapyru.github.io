@@ -1,6 +1,8 @@
 import { useParams } from "react-router-dom";
 import { loadPost } from "./loadPost";
 import { MarkdownRenderer } from "../../shared/capabilities/markdown/MarkdownRenderer";
+import { Seo } from "../../shared/capabilities/seo/Seo";
+import { pageTitle } from "../../shared/capabilities/seo/site";
 import styles from "./BlogPost.module.css";
 
 /**
@@ -16,6 +18,7 @@ export function BlogPost() {
   if (slug === "") {
     return (
       <main className={styles.page}>
+        <Seo title={pageTitle("文章缺少标识")} path="/blog" description="文章缺少标识,无法定位。" />
         <p className={styles.missing}>缺少文章标识,无法定位文章。</p>
       </main>
     );
@@ -25,6 +28,7 @@ export function BlogPost() {
   if (!post) {
     return (
       <main className={styles.page}>
+        <Seo title={pageTitle("文章不存在")} path="/blog" description="找不到对应文章,可能已被删除。" />
         <h1 className={styles.missingTitle}>文章不存在</h1>
         <p className={styles.missing}>
           没有找到 slug 为「{slug}」的文章。它可能已被删除,或您分享的链接有误。请回到博客列表重试。
@@ -35,6 +39,12 @@ export function BlogPost() {
 
   return (
     <main className={styles.page}>
+      <Seo
+        title={pageTitle(post.title)}
+        path={`/blog/${slug}`}
+        description={post.excerpt}
+        type="article"
+      />
       <article className={styles.post}>
         <h1 className={styles.title}>{post.title}</h1>
         <time className={styles.date} dateTime={post.date}>
