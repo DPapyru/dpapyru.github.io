@@ -1,0 +1,28 @@
+[
+  {
+    "slug": "content-pipeline",
+    "title": "我的内容管线设计笔记",
+    "date": "2024-06-01",
+    "excerpt": "用 gray-matter 驱动的构建期内容管线,把 Markdown 元数据变成可维护的文章索引。",
+    "palette": {
+      "key": "#c0392b",
+      "accent": "#2980b9"
+    },
+    "tags": [
+      "pipeline",
+      "markdown"
+    ]
+  },
+  {
+    "slug": "first-post",
+    "title": "关于我的第一篇文章",
+    "date": "2024-05-15",
+    "excerpt": "个人主页迁移计划的第一篇,记录我们正在重建的新站点。",
+    "palette": {
+      "brand": "#e67e22"
+    },
+    "tags": [
+      "meta"
+    ]
+  }
+]
