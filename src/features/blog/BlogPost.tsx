@@ -1,9 +1,11 @@
 import { useParams } from "react-router-dom";
+import type { Components } from "react-markdown";
 import { loadPost } from "./loadPost";
 import { MarkdownRenderer } from "../../shared/capabilities/markdown/MarkdownRenderer";
 import { rehypeCallout } from "../../shared/capabilities/markdown/callout";
 import { coloringMark } from "../../shared/capabilities/markdown/coloring-marks";
 import { protocolEmbed } from "../../shared/capabilities/markdown/protocol-embed";
+import { ProtocolRender } from "../../features/rendering/ProtocolRender";
 // Callout / 协议嵌入全局样式(rehype 插件产出的类名不经 CSS Modules 哈希,须全局加载)。
 import "../../shared/capabilities/markdown/callout.module.css";
 import "../../shared/capabilities/markdown/protocol-embed.module.css";
@@ -18,7 +20,27 @@ import styles from "./BlogPost.module.css";
  * 由 <MarkdownRenderer> 渲染;渲染层接缝仍在 loadPost/parsePostFull(#7,#8 仅替换正文渲染)。
  * Callout(#9)经 rehypePlugins 注入;着色标记(#10)与协议嵌入(#11)经 remarkPlugins 注入
  * (分别取 post.palette 与 protocolEmbed())。
+ *
+ * 协议嵌入渲染接管(#17):正文里 anims:/fx: 指令的占位节点经 components 映射接管为
+ * 真实渲染 —— div.protocol-embed-anims → <ProtocolRender protocol="anims"/>、
+ * div.protocol-embed-fx → <ProtocolRender protocol="fx"/>,素材路径取自节点属性。
  */
+
+/** 经 react-markdown components 接管协议嵌入占位节点(ticket #17)。 */
+const markdownComponents: Components = {
+  div: (props) => {
+    const { node, ...rest } = props;
+    const className = String(rest.className ?? "");
+    const isAnims = className.includes("protocol-embed-anims");
+    const isFx = className.includes("protocol-embed-fx");
+    if (!isAnims && !isFx) {
+      return <div {...rest} />;
+    }
+    const properties = (node?.properties ?? {}) as Record<string, unknown>;
+    const path = typeof properties.dataPath === "string" ? properties.dataPath : "";
+    return <ProtocolRender protocol={isAnims ? "anims" : "fx"} path={path} className={className} />;
+  },
+};
 export function BlogPost() {
   const { slug = "" } = useParams();
 
@@ -62,6 +84,7 @@ export function BlogPost() {
           source={post.body}
           remarkPlugins={[coloringMark(post.palette), protocolEmbed()]}
           rehypePlugins={[rehypeCallout]}
+          components={markdownComponents}
         />
       </article>
     </main>

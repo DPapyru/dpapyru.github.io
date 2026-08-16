@@ -193,6 +193,7 @@ src/
 - **插件**(shared/capabilities/markdown/protocol-embed.ts):独占一段的行指令 cs:<path> / anims:<path> / fx:<path>;cs: 经构建期 import.meta.glob(?raw)内联 public/ 素材并以带 language-* 类的代码块展示;anims:/fx: 产占位节点(带 data-protocol/data-path 属性),真实渲染由 #17 的 ProtocolRender 接管。
 - **路径约定**:站点内相对路径,即 public/ 下的路径(如 code/demo.ts、demos/fna-vertex-demo.fx)。
 - **接线**:BlogPost 经 MarkdownRenderer 的 remarkPlugins 注入 protocolEmbed()。
+- **渲染接管(#17)**:BlogPost 经 MarkdownRenderer 的 components 映射,把 anims:/fx: 占位节点交给 rendering 的 <ProtocolRender/>(构建期内联素材,缺失给明确降级提示);MarkdownRenderer 的 components 为透传 props。
 - **测试**:protocol-embed.test.tsx 断言 cs: 拉取展示(注入 mock 加载器)、anims:/fx: 占位节点、各降级不抛错。
 
 ## 提交门槛

@@ -32,3 +32,11 @@ export function add(a: number, b: number): number {
 下面这行指令会在渲染期把 code/demo.ts 拉取并以代码块展示:
 
 cs:code/demo.ts
+
+### 渲染能力示例
+
+下面两行指令由 rendering 组件接管,渲染出真实的动画与 shader:
+
+anims:demos/demo-anim-rotating-square.js
+
+fx:demos/fna-vertex-demo.fx

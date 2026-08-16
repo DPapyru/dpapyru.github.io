@@ -1,4 +1,5 @@
 import ReactMarkdown from "react-markdown";
+import type { Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
 import type { PluggableList } from "unified";
@@ -29,18 +30,22 @@ export interface MarkdownRendererProps {
   remarkPlugins?: PluggableList;
   /** 追加的 rehype 插件(合成到 highlight 之后),供 #9/#10/#11 等注入。 */
   rehypePlugins?: PluggableList;
+  /** 元素级渲染覆盖(透传给 react-markdown),供 #17 协议嵌入渲染接管等使用。 */
+  components?: Components;
 }
 
 export function MarkdownRenderer({
   source,
   remarkPlugins = [],
   rehypePlugins = [],
+  components,
 }: MarkdownRendererProps) {
   return (
     <div className={styles.markdown}>
       <ReactMarkdown
         remarkPlugins={[remarkGfm, ...remarkPlugins]}
         rehypePlugins={[rehypeHighlight, ...rehypePlugins]}
+        components={components}
       >
         {source}
       </ReactMarkdown>
