@@ -23,16 +23,6 @@
   color: var(--text-secondary, #555);
 }
 
-/* 本期朴素渲染:以 pre 呈现原文档。#8 Markdown 管线后此样式入档(可变更为普通正文排版)。 */
-.body {
-  margin-top: 1.5rem;
-  white-space: pre-wrap;
-  word-break: break-word;
-  font-family: inherit;
-  font-size: 0.95rem;
-  line-height: 1.7;
-  color: var(--text, #222);
-}
 
 .missing,
 .missingTitle {

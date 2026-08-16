@@ -1,11 +1,14 @@
 import { useParams } from "react-router-dom";
 import { loadPost } from "./loadPost";
+import { MarkdownRenderer } from "../../shared/capabilities/markdown/MarkdownRenderer";
 import styles from "./BlogPost.module.css";
 
 /**
  * 博客文章详情页 —— 路由 /blog/:slug。
  * 经 loadPost 接缝从静态源文定位单篇;未知 slug(loadPost 返回 undefined)给出明确反馈。
- * 本期朴素渲染原文档(body 原样输出),真正的 Markdown 管线(着色标记/Callout/协议嵌入)由 #8 替换渲染层。
+ * 正文经 #8 Markdown 渲染管线(remark-gfm 表格/任务列表 + rehype-highlight 代码高亮)
+ * 由 <MarkdownRenderer> 渲染;渲染层接缝仍在 loadPost/parsePostFull(#7,#8 仅替换正文渲染)。
+ * 着色标记/Callout/协议嵌入(#9/#10/#11)后续经 MarkdownRenderer 的插件 props 注入。
  */
 export function BlogPost() {
   const { slug = "" } = useParams();
@@ -37,8 +40,8 @@ export function BlogPost() {
         <time className={styles.date} dateTime={post.date}>
           {post.date}
         </time>
-        {/* #8 接缝:此处换成真正 Markdown 渲染(着色标记/Callout/协议嵌入)。 */}
-        <pre className={styles.body}>{post.body}</pre>
+        {/* #8 接缝:正文走 Markdown 管线;着色标记/Callout/协议嵌入由后续 ticket 注入插件。 */}
+        <MarkdownRenderer source={post.body} />
       </article>
     </main>
   );

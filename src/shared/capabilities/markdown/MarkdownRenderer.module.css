@@ -1,0 +1,92 @@
+/* ============================================================
+  Markdown 渲染能力样式(#8 管线)。
+  正文排版作用域在 .markdown 容器内(哈希类);代码块容器外观在此;
+  语法高亮的 .hljs / language-* **全局类** 配色见 src/styles/highlight-theme.css
+  (rehype-highlight 产出的类不经 CSS Modules 哈希,须放全局层)。
+============================================================ */
+
+.markdown {
+  margin-top: 1.5rem;
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: var(--text-primary, #1f2937);
+  word-break: break-word;
+}
+
+.markdown > *:first-child {
+  margin-top: 0;
+}
+.markdown h1,
+.markdown h2,
+.markdown h3,
+.markdown h4,
+.markdown h5,
+.markdown h6 {
+  margin: 1.4em 0 0.6em;
+  line-height: 1.3;
+  font-weight: 600;
+  color: var(--text-primary, #1f2937);
+}
+.markdown h1 { font-size: 1.45rem; }
+.markdown h2 {
+  font-size: 1.3rem;
+  border-bottom: 1px solid var(--border, #e2e6ec);
+  padding-bottom: 0.3em;
+}
+.markdown h3 { font-size: 1.15rem; }
+.markdown h4 { font-size: 1.05rem; }
+.markdown p { margin: 0.7em 0; }
+.markdown ul,
+.markdown ol { margin: 0.7em 0; padding-left: 1.5em; }
+.markdown li { margin: 0.25em 0; }
+.markdown a {
+  color: var(--accent, #2563eb);
+  text-decoration: none;
+}
+.markdown a:hover { text-decoration: underline; }
+.markdown blockquote {
+  margin: 0.8em 0;
+  padding: 0.3em 1em;
+  border-left: 3px solid var(--accent, #2563eb);
+  background: var(--surface, #f4f5f7);
+  color: var(--text-secondary, #5b6472);
+}
+.markdown img { max-width: 100%; }
+.markdown hr {
+  border: none;
+  border-top: 1px solid var(--border, #e2e6ec);
+  margin: 1.5em 0;
+}
+
+/* 内联代码 */
+.markdown :not(pre) > code {
+  background: var(--surface, #f4f5f7);
+  border: 1px solid var(--border, #e2e6ec);
+  border-radius: 0.3em;
+  padding: 0.1em 0.35em;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.875em;
+  color: var(--text-primary, #1f2937);
+}
+
+/* 代码块容器:rehype-highlight 把 <code class="hljs language-xxx"> 放进 <pre>。
+   这里仅块级外观;词法彩色由 highlight-theme.css 的 .hljs 主题色负责。 */
+.markdown pre {
+  margin: 0.9em 0;
+  background: #ffffff;
+  border: 1px solid var(--border, #e2e6ec);
+  border-radius: 0.5rem;
+  overflow-x: auto;
+}
+.markdown pre code {
+  display: block;
+  padding: 0.9em 1em;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.85rem;
+  line-height: 1.55;
+}
+
+/* 代码块底色随主题切换(与 highlight-theme.css 的 .hljs 前景色配套)。 */
+:root[data-theme="dark"] .markdown pre {
+  background: #0d1117;
+}

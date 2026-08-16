@@ -23,8 +23,9 @@ src/
 │   ├── search/          #   站内搜索
 │   └── rendering/       #   渲染能力(动画/HLSL→GLSL/WebGL2 几何)
 ├── shared/              # 共享层:跨 feature 复用的能力
-│   ├── capabilities/    #   能力(渲染能力、着色标记等运行时能力)
-│   │   └── geometry/      #   渲染数学库 Vec2/Vec3/Mat4(见下)
+│   ├── capabilities/    #   能力(渲染能力、着色标记、SEO 等运行时能力)
+│   │   ├── geometry/      #   渲染数学库 Vec2/Vec3/Mat4(见下)
+│   │   └── seo/           #   页面级 SEO 标签与 sitemap 生成(见下)
 │   ├── services/        #   服务(跨 feature 的服务能力)
 │   ├── atoms/           #   原子组件
 │   └── compositions/    #   组合组件
@@ -46,6 +47,18 @@ src/
 - **解析/构建纯函数**:`src/features/blog/blogIndex.ts` 导出 `BlogPostMeta`、`BlogIndexEntry`、`BlogSourceFile` 类型与 `parseBlogPost`、`buildBlogIndex`(内容管线接缝 #1,纯函数式、可单测)。
 - **列表页**:`src/features/blog/Blog.tsx` 直接 `import` `public/blog-index.json`,由索引驱动渲染每篇文章的卡片(标题/日期/摘要),链接到 `/blog/:slug`(详情页由 #7 提供)。
 
+
+## Markdown 渲染管线(shared/capabilities/markdown)
+
+- **归属**:置于共享层 `shared/capabilities/markdown`,是跨功能模块复用的渲染能力——文章详情页(`BlogPost`)正文以它渲染(#8)。
+- **管线基底**:`react-markdown` + `remark-gfm`(GFM 表格/任务列表)+ `rehype-highlight`(基于 lowlight 的代码块语法高亮),为新增运行时依赖(见 package.json)。
+- **公开 API**:`<MarkdownRenderer source={md} remarkPlugins? rehypePlugins? />`。入参 `source` 为原始 Markdown;可选 `remarkPlugins`/`rehypePlugins` 追加插件。
+- **插件挂载点(#9 Callout / #10 着色标记 / #11 协议嵌入)**:基底数组(remarkGfm + rehypeHighlight)显式作为内部数组;后续 ticket 经同名可选 props 注入各自的 remark/rehype 插件与本组件内基底合成,无需改动组件。本期**不**实现这三个插件,仅留缝。
+- **代码高亮样式**:`MarkdownRenderer` 内 import `highlight.js/styles/github.css`(明色基线);全局 `src/styles/highlight-theme.css` 提供 `[data-theme="dark"]` 下的 GitHub Dark 覆盖,使高亮随站点明/暗主题切换。正文排版作用于 `.markdown` 容器(CSS Modules)。
+- **可测接缝(接缝 1)**:`MarkdownRenderer.test.tsx` 断言公开 API 外显行为(GFM 表格结构、任务列表 checkbox、代码块含 `hljs`/`language-*` 类与词法类、插件注入缝)。
+- **接入**:`src/features/blog/BlogPost.tsx` 经 `loadPost/parsePostFull` 接缝(#7)取到 `{meta, body}`,把 `body` 传给 `MarkdownRenderer`;渲染层替换不改变加载器签名。
+
+## 站内搜索(services/search)
 ## 站内搜索(services/search)
 
 > 命名沿目录树中的 `features/search/`;此处“services/”仅表意“站内检索能力”,实际目录为 `src/features/search/`。
@@ -162,7 +175,7 @@ src/
   - `/`(默认)->「关于我」
   - `/blog` -> 博客列表页(由构建期索引驱动);`/blog/:slug` 详情页由 #7 提供
   - `/contact` -> 联系方式占位页
-  - `*` -> 404 占位(`shared/compositions/NotFound`;设计化 404 由 #18 负责)
+  - `*` -> 404 页(`shared/compositions/NotFound`,设计化自 #18;消费主题 CSS 变量,提供回首页/博客出口)
 - **顶部导航**:跨板块共享,置于 `shared/compositions/Header`,用 `NavLink` 呈现当前板块选中态(`aria-current="page"`);右侧挂载 `ThemeToggle`(theme feature 提供,即时切换明/暗 + accent,不持久化)。
 - 测试:`AppRoutes` 导出以便用 `MemoryRouter` 包裹做路由渲染测试(点击切换、active 态、404、直达)。
 
