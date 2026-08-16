@@ -1,6 +1,10 @@
 import { useParams } from "react-router-dom";
 import { loadPost } from "./loadPost";
 import { MarkdownRenderer } from "../../shared/capabilities/markdown/MarkdownRenderer";
+import { rehypeCallout } from "../../shared/capabilities/markdown/callout";
+import { coloringMark } from "../../shared/capabilities/markdown/coloring-marks";
+// Callout 全局样式(rehypeCallout 产出的类名不经 CSS Modules 哈希,须全局加载)。
+import "../../shared/capabilities/markdown/callout.module.css";
 import { Seo } from "../../shared/capabilities/seo/Seo";
 import { pageTitle } from "../../shared/capabilities/seo/site";
 import styles from "./BlogPost.module.css";
@@ -10,7 +14,7 @@ import styles from "./BlogPost.module.css";
  * 经 loadPost 接缝从静态源文定位单篇;未知 slug(loadPost 返回 undefined)给出明确反馈。
  * 正文经 #8 Markdown 渲染管线(remark-gfm 表格/任务列表 + rehype-highlight 代码高亮)
  * 由 <MarkdownRenderer> 渲染;渲染层接缝仍在 loadPost/parsePostFull(#7,#8 仅替换正文渲染)。
- * 着色标记/Callout/协议嵌入(#9/#10/#11)后续经 MarkdownRenderer 的插件 props 注入。
+ * Callout(#9)经 rehypePlugins 注入;着色标记(#10)经 remarkPlugins 注入(取 post.palette);协议嵌入(#11)后续同通道。
  */
 export function BlogPost() {
   const { slug = "" } = useParams();
@@ -50,8 +54,12 @@ export function BlogPost() {
         <time className={styles.date} dateTime={post.date}>
           {post.date}
         </time>
-        {/* #8 接缝:正文走 Markdown 管线;着色标记/Callout/协议嵌入由后续 ticket 注入插件。 */}
-        <MarkdownRenderer source={post.body} />
+        {/* #8/#9/#10 接缝:正文走 Markdown 管线;Callout 经 rehypePlugins 注入,着色标记经 remarkPlugins 注入(色板取 post.palette);协议嵌入(#11)后续同通道。 */}
+        <MarkdownRenderer
+          source={post.body}
+          remarkPlugins={[coloringMark(post.palette)]}
+          rehypePlugins={[rehypeCallout]}
+        />
       </article>
     </main>
   );

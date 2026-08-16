@@ -1,0 +1,72 @@
+/* ============================================================
+  Callout 提示框样式(ticket #9)。
+  这些类由 callout.ts 的 rehype 插件直接写入 HAST 的 className(普通字符串,
+  **不**经 CSS Modules 哈希),故必须用 :global 包起来才能在全局层命中。
+  与 MarkdownRenderer.module.css 里普通 blockquote 区分:彩色描边 + 淡色底 + 标题栏。
+
+  配色消费主题体系:通用底/描边用 --surface/--border/--text-*;五级各自再带
+  专属强调色,并以 --accent 与 --accent-soft 参与,随 data-theme 切换明/暗档。
+============================================================ */
+
+:global(.callout) {
+  margin: 0.9em 0;
+  padding: 0.6em 1em 0.6em 1.15em;
+  border-left: 4px solid var(--callout-accent, var(--accent, #2563eb));
+  border-radius: 0.5rem 0.35rem 0.35rem 0.5rem;
+  background: var(--callout-bg, var(--surface, #f4f5f7));
+  color: var(--text-primary, #1f2937);
+}
+
+:global(.callout-title) {
+  margin: 0 0 0.35em;
+  font-weight: 700;
+  font-size: 0.8rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--callout-accent, var(--accent, #2563eb));
+}
+
+:global(.callout-body) > *:first-child {
+  margin-top: 0;
+}
+:global(.callout-body) > *:last-child {
+  margin-bottom: 0;
+}
+
+/* 五级专属强调色(--callout-accent 边框/标题,--callout-bg 淡底)。
+  定义在 :root 下,随 :root[data-theme] 切换档位。 */
+:root {
+  --callout-note: #2563eb;
+  --callout-tip: #059669;
+  --callout-important: #7c3aed;
+  --callout-warning: #d97706;
+  --callout-caution: #dc2626;
+}
+:root[data-theme="dark"] {
+  --callout-note: #60a5fa;
+  --callout-tip: #34d399;
+  --callout-important: #a78bfa;
+  --callout-warning: #fbbf24;
+  --callout-caution: #f87171;
+}
+
+:global(.callout-note) {
+  --callout-accent: var(--callout-note);
+  --callout-bg: color-mix(in srgb, var(--callout-note) 10%, var(--bg, #ffffff));
+}
+:global(.callout-tip) {
+  --callout-accent: var(--callout-tip);
+  --callout-bg: color-mix(in srgb, var(--callout-tip) 10%, var(--bg, #ffffff));
+}
+:global(.callout-important) {
+  --callout-accent: var(--callout-important);
+  --callout-bg: color-mix(in srgb, var(--callout-important) 10%, var(--bg, #ffffff));
+}
+:global(.callout-warning) {
+  --callout-accent: var(--callout-warning);
+  --callout-bg: color-mix(in srgb, var(--callout-warning) 10%, var(--bg, #ffffff));
+}
+:global(.callout-caution) {
+  --callout-accent: var(--callout-caution);
+  --callout-bg: color-mix(in srgb, var(--callout-caution) 10%, var(--bg, #ffffff));
+}
