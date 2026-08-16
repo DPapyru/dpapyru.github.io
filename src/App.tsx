@@ -2,6 +2,7 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { ThemeProvider } from "./features/theme";
 import { About } from "./features/about/About";
 import { Blog } from "./features/blog/Blog";
+import { BlogPost } from "./features/blog/BlogPost";
 import { Contact } from "./features/contact/Contact";
 import { Header } from "./shared/compositions/Header/Header";
 import { NotFound } from "./shared/compositions/NotFound/NotFound";
@@ -17,6 +18,7 @@ export function AppRoutes() {
       <Routes>
         <Route path="/" element={<About />} />
         <Route path="/blog" element={<Blog />} />
+        <Route path="/blog/:slug" element={<BlogPost />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
