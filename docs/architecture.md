@@ -24,6 +24,7 @@ src/
 │   └── rendering/       #   渲染能力(动画/HLSL→GLSL/WebGL2 几何)
 ├── shared/              # 共享层:跨 feature 复用的能力
 │   ├── capabilities/    #   能力(渲染能力、着色标记等运行时能力)
+│   │   └── geometry/      #   渲染数学库 Vec2/Vec3/Mat4(见下)
 │   ├── services/        #   服务(内容管线、索引构建等)
 │   ├── atoms/           #   原子组件
 │   └── compositions/    #   组合组件
@@ -36,6 +37,14 @@ src/
 - **功能模块 (feature)**、**共享层 (shared)** 的术语与边界定义见 `CONTEXT.md` 与 `docs/adr/0002-rendering-extraction.md`。
 - 一个板块只在其 feature 目录内自含实现;跨 feature 复用一律下沉到 `shared/`。
 - feature 目录内以 `<Name>.module.css` 承载该组件样式(CSS Modules)。
+
+## 渲染数学库(shared/capabilities/geometry)
+
+- **归属**:置于共享层 `shared/capabilities/geometry`,作为渲染运行时能力(接缝 2)——ADR-0002 把几何数学(Vec/Mat)归入渲染能力;rendering feature 的 WebGL 顶点绘制与动画运行时均需复用,故下沉到共享层。
+- **公开 API**:`geometry/index.ts` 导出 `Vec2`、`Vec3`、`Mat4`。
+  - **Vec2/Vec3**:加减(`add`/`sub`)、标量缩放(`scale`)、点积(`dot`)、叉积(`cross`,仅 Vec3)、长度(`length`)、归一化(`normalized`,零向量返回零向量不产生 NaN)、`equals(epsilon)`、`toArray()`。
+  - **Mat4**:列主序(column-major,与 WebGL uniform 上传约定一致,经 `toArray()` 直接上传);单位矩阵 `identity()`、平移 `translation`、绕轴旋转 `rotationX/Y/Z`(弧度)、缩放 `scaling`、透视投影 `perspective(fovY, aspect, near, far)`、正交投影 `orthographic`、矩阵乘法 `multiply`、点/向量变换 `transformPoint`、`transpose`、`equals(epsilon)`。
+  - **约定**:纯函数式——所有运算返回新实例、不改入参;零第三方运行时依赖;strict 类型。
 
 ## 样式与主题约定
 
@@ -51,7 +60,7 @@ src/
 - 测试策略:只测**模块公开 API 的外部行为**(输入→输出),不测内部实现细节。
 - 可测的接缝:
   - **接缝 1 — 内容管线**(`shared/services`):markdown front matter 解析、博客索引构建。
-  - **接缝 2 — 渲染运行时**(`shared/capabilities`):着色标记、Callout、协议嵌入的解析/渲染。
+  - **接缝 2 — 渲染运行时**(`shared/capabilities`):着色标记、Callout、协议嵌入的解析/渲染,以及 geometry 数学库的输入→输出断言。
 - 测试与实现**同批提交**。
 
 ## 构建产物约定
