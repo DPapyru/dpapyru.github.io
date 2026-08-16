@@ -177,6 +177,17 @@ src/
 - **顶部导航**:跨板块共享,置于 `shared/compositions/Header`,用 `NavLink` 呈现当前板块选中态(`aria-current="page"`);右侧挂载 `ThemeToggle`(theme feature 提供,即时切换明/暗 + accent,不持久化)。
 - 测试:`AppRoutes` 导出以便用 `MemoryRouter` 包裹做路由渲染测试(点击切换、active 态、404、直达)。
 
+## 静态生成与 SEO
+
+页面级 SEO / Open Graph / Twitter Card + 构建期 sitemap/robots(ticket #18)。
+
+- **归属**:SEO 能力置于共享层 `shared/capabilities/seo`,跨板块复用;sitemap/robots 的生成纯函数亦在此(供构建脚本与测试同源)。
+- **站点元信息**(`site.ts`):`SITE_NAME`、`SITE_URL`(`https://dpapyru.github.io`)、`pageTitle(part)`(拼「标题 · 站点名」)、`absoluteUrl(path)`(站内路径 → 绝对 URL)。
+- **`<Seo/>` 组件**(`Seo.tsx`):按页面数据(标题/路径/描述/og 类型/预览图)设置 `document.title` 与 meta description、Open Graph(`og:title/type/url/site_name/description/image`)、Twitter Card(`twitter:card/title/description/image`)。纯函数 `buildSeoTags` 负责 props→head 标签描述(输入→输出,可单测);组件挂载时经 `applyHead` 写入 head,并在切换/卸载时清理自己通过 `data-seo` 标记写入的标签,避免跨路由残留。
+- **使用**:各板块页(`About`/`Blog`/`Contact`)与文章详情页(`BlogPost`,按文章标题/摘要,og type=article)及 404 页挂载 `<Seo/>`;首页 `/` 路径被规范为站点根 URL。
+- **构建期 SEO 脚本**(`scripts/build-seo.ts`,`bun run build:seo`):读取 `public/blog-index.json` 的 slug,拼出已知 URL(`/`、`/blog`、每个 `/blog/:slug`),用 `buildSitemapXml`/`buildRobotsTxt` 生成 `public/sitemap.xml` 与 `public/robots.txt`。`bun run build` 在 vite build 前先跑 `build:content && build:seo`,保证每次部署带上最新站点地图。
+- **测试**:`Seo.test.tsx` 断言 jsdom 下 `document.title` 与 meta(含卸载清理);`sitemap.test.ts` 断言 `buildSitemapXml`/`buildRobotsTxt`/适合`blogSlugPaths` 的输入→输出。
+
 ## 提交门槛
 
 合入前必须通过:
