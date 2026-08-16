@@ -1,3 +1,10 @@
+# dpapyru.github.io
+
+## 项目共识
+
+1. **gh-tml 仅作参考**:`gh-tml/` 子目录是独立仓库(gh-tml/gh-tml.github.io),其内容只作为**参考源代码**,禁止复制、迁移或提交到本项目。
+2. **本项目架构**:本仓库(dpapyru.github.io,GitHub Pages)是实际开发的新项目;前端框架使用 **React**,并采用**高度模块化设计**(低耦合、高内聚,按模块拆分,便于独立开发、维护与复用)。
+
 ## Agent skills
 
 ### Issue tracker
