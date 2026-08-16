@@ -1,2 +1,18 @@
 # gh-tml 是独立 git 仓库(gh-tml/gh-tml.github.io),禁止提交到上层仓库
 gh-tml/
+
+# 依赖与构建产物
+node_modules/
+dist/
+coverage/
+
+# 本地构建缓存(bun 下载缓存 / 临时目录)
+.bun-cache/
+.tmp/
+
+# Bun
+*.bun
+
+# 编辑器/系统
+.DS_Store
+*.local

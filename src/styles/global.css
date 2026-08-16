@@ -1,0 +1,32 @@
+:root {
+  color-scheme: light dark;
+  --text-primary: #222;
+  --text-secondary: #555;
+  --bg: #fff;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --text-primary: #e6e6e6;
+    --text-secondary: #aaa;
+    --bg: #1a1a1a;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: system-ui, -apple-system, "Segoe UI", "PingFang SC",
+    "Microsoft YaHei", sans-serif;
+  color: var(--text-primary);
+  background: var(--bg);
+  line-height: 1.6;
+}
