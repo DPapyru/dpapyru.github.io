@@ -1,0 +1,52 @@
+.viewport {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background:
+    linear-gradient(45deg, rgba(0, 0, 0, 0.15) 25%, transparent 25%),
+    linear-gradient(-45deg, rgba(0, 0, 0, 0.15) 25%, transparent 25%),
+    #0b0b12;
+  background-size: 16px 16px;
+  border: 1px solid var(--border, #333);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.errorBanner {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem;
+  background: rgba(20, 8, 10, 0.82);
+  color: #ffd6d6;
+  font-size: 0.95rem;
+  text-align: center;
+}
+
+.errorPhase {
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  color: #ff9d9d;
+  border: 1px solid rgba(255, 120, 120, 0.5);
+  border-radius: 999px;
+  padding: 0.1rem 0.6rem;
+}
+
+.errorMessage {
+  max-width: 28rem;
+  white-space: pre-wrap;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.85rem;
+}
