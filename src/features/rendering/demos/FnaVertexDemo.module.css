@@ -1,0 +1,43 @@
+.viewport {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #0b0b12;
+  border: 1px solid var(--border, #333);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+/* FX 与顶点两层均绝对铺满视口,顶点层(后渲染)叠在 FX 之上。 */
+.fxLayer {
+  position: absolute;
+  inset: 0;
+}
+
+.meshCanvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  /* 顶点层作为叠加前景,不拦截鼠标事件。 */
+  pointer-events: none;
+}
+
+.errorBanner {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(20, 8, 10, 0.82);
+  color: #ffd6d6;
+  font-size: 0.95rem;
+  text-align: center;
+}
+
+.errorMessage {
+  max-width: 28rem;
+  white-space: pre-wrap;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.85rem;
+}

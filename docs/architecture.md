@@ -112,6 +112,20 @@ src/
 - **ShaderStage 运行时**(`shaders/shaderStageRuntime.ts`):固定全屏过场顶点 + 转译片段,编译链接后每帧更新 uniform 并以索引绘制。公开:`buildProgram(gl, vs, fs)`(编译/链接,返回句柄与 uniform 位置或错误)、`renderFrame(gl, handles, uniformLocations, { time, delta, frame, width, height })`(一帧:viewport + 更新 uResolution/uTime/iResolution/iTime/iTimeDelta/iFrame + drawElements,返回 uniform 上传快照供测试观测)。依赖结构接口 `ShaderStageGL`(与 `useWebGLMesh` 的 `WebGLMeshContext` 同思路):生产传真实 `WebGL2RenderingContext`,测试传 mock。
 - **组件**(`ShaderStage.tsx` + `ShaderStage.module.css`):`<ShaderStage source={fx} />` 挂载后自动转译→编译→实时渲染;`createContext?` 支持注入 WebGL 上下文(mock/未来后端);转译/编译/上下文任一失败均在 canvas 上叠加**明确错误提示**(不静默)。卸载或换源自动停止帧循环。
 - **可测接缝(接缝 2)**:`hlslToGLSL.test.ts` 断言给定 `.fx` 的入口/类型改写/uniform 注入输出;`shaders/shaderStageRuntime.test.ts` 用录制型 mock GL 断言 uniform 更新与绘制;`ShaderStage.test.tsx` 用 RTL + mock WebGL 挂载断言成功渲染与三阶段错误分支。
+
+## 「顶点+FX」融合演示与素材(rendering/demos, ticket #14)
+
+- **归属**:置于 `src/features/rendering/demos/`,把 #13 的 useWebGLMesh(顶点管线)与 #12 的 ShaderStage(shader 叠加)组合成**单视口同时生效**的融合演示,作为博客文章可引用的内容素材与测试夹具。
+- **组件**(`FnaVertexDemo.tsx` + `FnaVertexDemo.module.css`):`<FnaVertexDemo/>` 同时渲染两层——
+  - **背景 FX 层**:复用 `<ShaderStage source={...}/>` 全屏渲染 HLSL shader;
+  - **前景顶点层**:独立 canvas 用 `useWebGLMesh` 绘制一个随时间做正弦波位移的网格,叠在 FX 之上。
+  - 可注入点(测试/后端):`createContext?`(顶点层 WebGL 上下文)、`shaderCreateContext?`(ShaderStage WebGL 上下文)、`data?`(顶点数据,缺省 `FNA_VERTEX_DATA`)、`shaderSource?`(缺省 `FNA_FX_SOURCE`)、`requestFrame?`/`cancelFrame?`(帧循环可注入,缺省全局 RAF)、`onContextError?`。顶点层上下文不可用或 shader 转译/编译失败均叠加**明确错误提示**。
+- **测试夹具与数据源**(`fnaFixture.ts`,纯函数):导出 `FNA_GRID`、`buildFnaVertexData()`(5×5 平面网格的 `MeshVertexArrays`)、`FNA_VERTEX_DATA`(基线夹具)、`waveDisplace(base, t)`(Z 轴正弦波位移,演示顶点动态化)、`validateVertexData(data)`(结构校验)与 `FNA_FX_SOURCE`(融合 shader 源码)。
+- **素材格式约定**(可被协议嵌入引用的静态内容,放 `public/demos/`,i.e. `fna:`/vertex/fx 素材,与 anims: 同类的自含素材):
+  - `public/demos/fna-vertex-demo.fx` — HLSL(.fx)片段 shader,入口 `void mainImage(out float4 fragColor, float2 fragCoord)`;经 hlslToGLSL 转译后由 ShaderStage 渲染,运行时注入 iTime/iResolution 等 uniform。设计上呼应同名顶点网格(线框 + 顶点高亮光点)。
+  - `public/demos/fna-vertex-demo.js` — 顶点/几何数据静态素材,自包含 ES 模块(不 import src/),default 导出 `{ format, label, columns, rows, positions, colors, uvs, indices }`。**数据格式**与 `useWebGLMesh` 的 `MeshVertexArrays` 一致:positions(n×3,±1,z=0)、colors(n×4,RGBA)、uvs(n×2)、indices(Uint16Array,每四边形两三角形顺时针)。使用方(协议嵌入或测试夹具)可直接把后四者交给 `createMesh`/`packVertices`。
+  - 同源一致性:静态素材 `fna-vertex-demo.js`/它的 `.fx` 与测试夹具 `fnaFixture.ts` 数据同构,保证「组件用法」「内容素材」「测试夹具」三方一致。
+- **可测接缝(接缝 2)**:`fnaFixture.test.ts` 断言网格构造/位移/校验/HLS 转译输入→输出;`FnaVertexDemo.test.tsx` 用 RTL + 双 mock WebGL 挂载断言两层同时渲染、各出一次/多帧绘制、顶点层上下文错误、shader 转译错误浮出。
 ## 样式与主题约定
 
 - 组件样式用 **CSS Modules**(`*.module.css`),通过 `import styles from "./X.module.css"` 使用。
