@@ -64,12 +64,12 @@ function extOf(path: string): string {
 }
 
 /**
- * 构建默认代码加载器:构建期内联 public/ 下各文件为字符串(import.meta.glob ?raw,
- * eager 使运行时同步访问),键归一化为「public/ 之下的站点相对路径」及 basename 双查找,
+ * 构建默认代码加载器:构建期内联 src/assets/ 下各文件为字符串(import.meta.glob ?raw,
+ * eager 使运行时同步访问),键归一化为「src/assets/ 之下的相对路径」及 basename 双查找,
  * 以便指令里写 code/demo.ts 或 demo.ts 都能命中。
  */
 function defaultCodeLoader(): CodeLoader {
-  const entrypoints = import.meta.glob("../../../../public/**/*", {
+  const entrypoints = import.meta.glob("../../../../src/assets/code/**/*.{ts,tsx,js,jsx,css,html,json}", {
     query: "?raw",
     import: "default",
     eager: true,
@@ -79,7 +79,7 @@ function defaultCodeLoader(): CodeLoader {
 
   for (const [key, raw] of Object.entries(entrypoints)) {
     if (typeof raw !== "string") continue; // 目录/二进制跳过
-    const marker = "/public/";
+    const marker = "/src/assets/";
     const at = key.lastIndexOf(marker);
     const rel = at >= 0 ? key.slice(at + marker.length) : key;
     byPath.set(rel, raw);
@@ -89,7 +89,12 @@ function defaultCodeLoader(): CodeLoader {
 
   return (path: string): string | undefined => {
     const name = path;
-    const rel = path.startsWith("public/") ? path.slice("public/".length) : path;
+    let rel = path;
+    if (path.startsWith("public/")) {
+      rel = path.slice("public/".length);
+    } else if (path.startsWith("src/assets/")) {
+      rel = path.slice("src/assets/".length);
+    }
     const hit = byPath.get(rel) ?? byPath.get(name) ?? byBase.get(rel.slice(rel.lastIndexOf("/") + 1));
     return hit;
   };
