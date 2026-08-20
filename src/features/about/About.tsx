@@ -11,7 +11,9 @@ export function About() {
     <main className={styles.about}>
       <Seo title={pageTitle("关于我")} path="/" description="DPapyru 的个人主页 — 关于我。" />
       <h1 className={styles.title}>关于我</h1>
-      <p className={styles.lead}>这里是 DPapyru 的个人主页。</p>
+      <p className={styles.lead}>
+        DPapyru，Terraria/tModLoader Mod 开发者，gh-tml 教程站作者，WebGL / Shader / React 技术探索者。
+      </p>
     </main>
   );
 }

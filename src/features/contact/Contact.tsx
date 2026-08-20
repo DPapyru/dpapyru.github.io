@@ -11,7 +11,21 @@ export function Contact() {
     <main className={styles.page}>
       <Seo title={pageTitle("联系方式")} path="/contact" description="联系 DPapyru。" />
       <h1 className={styles.title}>联系方式</h1>
-      <p className={styles.lead}>联系方式内容将在后续 ticket 提供。</p>
+      <div className={styles.lead}>
+        <p>你可以通过以下方式联系我：</p>
+        <ul style={{ marginTop: "1rem", listStyle: "none", padding: 0 }}>
+          <li style={{ margin: "0.5rem 0" }}>
+            <strong>GitHub:</strong>{" "}
+            <a href="https://github.com/DPapyru" target="_blank" rel="noopener noreferrer">
+              github.com/DPapyru
+            </a>
+          </li>
+          <li style={{ margin: "0.5rem 0" }}>
+            <strong>Email:</strong>{" "}
+            <a href="mailto:dpapyru@gmail.com">dpapyru@gmail.com</a>
+          </li>
+        </ul>
+      </div>
     </main>
   );
 }
