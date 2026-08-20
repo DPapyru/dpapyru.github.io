@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { describe, expect, it } from "vitest";
 import { BlogPost } from "./BlogPost";
-import blogIndex from "../../../public/blog-index.json";
+import blogIndex from "../../generated/blog-index.json";
 
 function renderDetail(slug: string) {
   return render(

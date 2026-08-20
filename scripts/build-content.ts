@@ -8,7 +8,7 @@ import { buildBlogIndex, type BlogSourceFile } from "../src/features/blog/blogIn
  */
 
 const contentDir = join(process.cwd(), "content/blog");
-const outFile = join(process.cwd(), "public/blog-index.json");
+const outFile = join(process.cwd(), "src/generated/blog-index.json");
 
 const files: BlogSourceFile[] = readdirSync(contentDir)
   .filter((f) => f.endsWith(".md"))
@@ -19,7 +19,7 @@ const files: BlogSourceFile[] = readdirSync(contentDir)
   }));
 
 const index = buildBlogIndex(files);
-mkdirSync(join(process.cwd(), "public"), { recursive: true });
+mkdirSync(join(process.cwd(), "src/generated"), { recursive: true });
 writeFileSync(outFile, JSON.stringify(index, null, 2) + "\n", "utf8");
 
 console.log(`build-content: ${index.length} 篇文章 -> ${outFile}`);

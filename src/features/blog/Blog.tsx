@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import styles from "./Blog.module.css";
-import blogIndex from "../../../public/blog-index.json";
+import blogIndex from "../../generated/blog-index.json";
 import { Search } from "../search";
 import { Seo } from "../../shared/capabilities/seo/Seo";
 import { pageTitle } from "../../shared/capabilities/seo/site";
