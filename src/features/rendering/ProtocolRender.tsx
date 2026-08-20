@@ -25,25 +25,25 @@ export interface ProtocolRenderProps {
   className?: string;
 }
 
-/** 动画脚本素材:public/demos/demo-anim-*.js,构建期内联为模块。 */
-const animModules = import.meta.glob("../../../public/demos/demo-anim-*.js", {
+/** 动画脚本素材:src/assets/demos/demo-anim-*.js,构建期内联为模块。 */
+const animModules = import.meta.glob("../../../src/assets/demos/demo-anim-*.js", {
   import: "default",
   eager: true,
 }) as Record<string, unknown>;
 
-/** shader 素材:public/demos/*.fx,构建期 ?raw 内联为源码字符串。 */
-const fxSources = import.meta.glob("../../../public/demos/*.fx", {
+/** shader 素材:src/assets/demos/*.fx,构建期 ?raw 内联为源码字符串。 */
+const fxSources = import.meta.glob("../../../src/assets/demos/*.fx", {
   query: "?raw",
   import: "default",
   eager: true,
 }) as Record<string, string>;
 
 /**
- * 归一化 glob 键为「public/ 之后的站点相对路径」,按相对路径与 basename 双查找。
+ * 归一化 glob 键为「src/assets/ 之后的相对路径」,按相对路径与 basename 双查找。
  * vitest 与 vite 的 glob 键形态不同(绝对/相对),统一处理。
  */
 function resolveAsset(table: Record<string, unknown>, path: string): unknown {
-  const marker = "/public/";
+  const marker = "assets/";
   for (const [key, value] of Object.entries(table)) {
     const at = key.lastIndexOf(marker);
     const rel = at >= 0 ? key.slice(at + marker.length) : key;
