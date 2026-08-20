@@ -14,7 +14,7 @@ import {
  * 保证每次部署都带上最新的站点地图。
  */
 
-const indexPath = join(process.cwd(), "public/blog-index.json");
+const indexPath = join(process.cwd(), "src/generated/blog-index.json");
 const outDir = join(process.cwd(), "public");
 
 const index: BlogIndexEntry[] = JSON.parse(readFileSync(indexPath, "utf8"));
