@@ -27,7 +27,7 @@ void mainImage(out float4 fragColor, float2 fragCoord) {
 
     // 3) 顶点高亮光点:在网格顶点处撒一圈随 iTime 明暗的光点。
     float2 pointId = floor(p * grid);
-    float2 rnd = frac(sin(dot(pointId, float2(12.9898, 78.233))) * 43758.5453);
+    float2 rnd = float2(frac(sin(dot(pointId, float2(12.9898, 78.233))) * 43758.5453));
     float blink = 0.5 + 0.5 * sin(iTime * 2.0 + rnd.x * 6.28);
     float d = length(frac(p * grid) - 0.5);
     float spark = smoothstep(0.12, 0.0, d) * blink * 0.8;

@@ -39,4 +39,4 @@ cs:code/demo.ts
 
 anims:demos/demo-anim-rotating-square.js
 
-fx:demos/fna-vertex-demo.fx
+fx:demos/demo.fx

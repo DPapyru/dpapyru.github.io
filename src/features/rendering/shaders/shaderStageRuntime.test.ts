@@ -4,6 +4,9 @@ import {
   renderFrame,
   compileShader,
   FULLSCREEN_VERTEX,
+  FULLSCREEN_POSITIONS,
+  FULLSCREEN_TEXCOORDS,
+  FULLSCREEN_INDICES,
   GL_VERTEX_SHADER,
   GL_FRAGMENT_SHADER,
   type ShaderStageGL,
@@ -142,5 +145,24 @@ describe("renderFrame — 每帧的运行时 uniform 更新与绘制(接缝 2)",
     expect(f1.find((s) => s.name === "iTime")?.values).toEqual([1]);
     expect(f2.find((s) => s.name === "iTime")?.values).toEqual([2]);
     expect(f2.find((s) => s.name === "iFrame")?.values).toEqual([2]);
+  });
+});
+
+describe("FULLSCREEN 四边形拓扑与 UV 布局(真实渲染回归守卫)", () => {
+  test("位置 = 4 顶点 BL,BR,TL,TR(每顶点 3 分量)", () => {
+    expect(FULLSCREEN_POSITIONS.length).toBe(12);
+    expect(Array.from(FULLSCREEN_POSITIONS)).toEqual([
+      -1.0, -1.0, 0.0, 1.0, -1.0, 0.0, -1.0, 1.0, 0.0, 1.0, 1.0, 0.0,
+    ]);
+  });
+
+  test("UV = 4 顶点 BL(0,1) BR(1,1) TL(0,0) TR(1,0),与 main() 的 V 翻转契约匹配", () => {
+    expect(FULLSCREEN_TEXCOORDS.length).toBe(8);
+    expect(Array.from(FULLSCREEN_TEXCOORDS)).toEqual([0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0]);
+  });
+
+  test("索引三角形化须铺满 [-1,1]² 全屏(0,1,3)+(0,3,2)", () => {
+    expect(Array.from(FULLSCREEN_INDICES)).toEqual([0, 1, 3, 0, 3, 2]);
+    expect(FULLSCREEN_INDICES.length).toBe(6);
   });
 });

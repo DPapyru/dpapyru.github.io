@@ -13,11 +13,17 @@ export const FULLSCREEN_POSITIONS = new Float32Array([
   -1.0, -1.0, 0.0, 1.0, -1.0, 0.0, -1.0, 1.0, 0.0, 1.0, 1.0, 0.0,
 ]);
 
+/**
+ * 全屏四边形 UV,顶点序与 FULLSCREEN_POSITIONS 一致:BL, BR, TL, TR。
+ * 契约与入口 main() 的 "vec2 uv = vec2(vUv.x, 1.0 - vUv.y)" 翻转匹配:
+ * 底部顶点 v=1、顶部顶点 v=0(BL(0,1) BR(1,1) TL(0,0) TR(1,0))。
+ */
 export const FULLSCREEN_TEXCOORDS = new Float32Array([
-  0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0,
+  0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0,
 ]);
 
-export const FULLSCREEN_INDICES = new Uint16Array([0, 1, 2, 0, 2, 3]);
+/** 三角形化须铺满 [-1,1]² 全屏:(BL,BR,TR) + (BL,TR,TL)。 */
+export const FULLSCREEN_INDICES = new Uint16Array([0, 1, 3, 0, 3, 2]);
 
 /** 固定全屏过场顶点着色器(透传位置与 UV)。 */
 export const FULLSCREEN_VERTEX = [

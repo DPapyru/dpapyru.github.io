@@ -4,6 +4,44 @@
 
 ## 验证记录
 
+### 验证记录 2026-08-21：修复 ShaderStage 全屏四边形渲染黑区/渐变撕裂 (FULLSCREEN 拓扑与 UV)
+
+**级别**：L3 统一验收
+
+**命令与结果**：
+- `bun scripts/check-shaders.ts`：通过 (闸已升级:除编译/链接外,新增真实绘制 + readPixels 像素断言,5 个程序全部「编译+链接+渲染像素断言」通过)
+- `npx vitest run`：通过 (139/139,含新增的「FULLSCREEN 四边形拓扑与 UV 布局」常量精确值测试 3 个)
+- `npx tsc --noEmit`：通过 (无任何 TypeScript 编译错误)
+- `bun scripts/build-content.ts`：通过 (成功输出 2 篇文章到 src/generated/blog-index.json)
+- `npx vite build`：通过 (生产打包成功)
+- 端到端:`npx vite preview --port 4173` + headless Chrome 加载 /blog/content-pipeline,截图分析 canvas 渲染出完整平滑渐变(左侧 x=320 蓝 (2,59,209) → 右侧 x=940 粉 (253,59,209)),无黑区、无对角线撕裂、无 shader-stage-error 横幅
+- 反向验证:临时把 FULLSCREEN_INDICES 还原为 [0,1,2,0,2,3] 后闸立即 FAIL(报 demo.fx BR/TR=0,0,0、FALLBACK 右缘中点=黑),证明闸能抓住此 bug;还原修复值后 PASS
+
+**备注**：
+用户报告博客内容管线 HLSL 渲染画面异常:右半屏大面积纯黑、硬边对角线、渐变在三角形边界撕裂(紫/蓝、粉/蓝、洋红→青、青→粉 断裂)。用真实 WebGL2 + readPixels 反馈回路复现:现状四角采样 BL=青 BR=黑 TL=粉 TR=黑(右半屏未绘制),与用户描述一致。
+根因:src/features/rendering/shaders/shaderStageRuntime.ts 的全屏四边形两个常量自最初提交(7167360)就错:
+1) FULLSCREEN_INDICES=[0,1,2,0,2,3]:顶点序为 BL,BR,TL,TR,但三角形 (BL,BR,TL)+(BL,TL,TR) 的并集只覆盖左半屏(缺口为 {y<x}∩{y>-x} 的右缘楔形),BR/TR 及右缘永不绘制 → 纯黑 + 硬对角边;
+2) FULLSCREEN_TEXCOORDS 有两处错:(a) 12 个 float = 6 对 UV 却只对应 4 顶点(潜伏长度错误);(b) 前 4 对 (0,0)(1,0)(1,1)(0,0) 与入口 main() 的 "vec2 uv = vec2(vUv.x, 1.0 - vUv.y)" 翻转不匹配(契约:底部顶点 v=1、顶部顶点 v=0),渐变错位/撕裂。
+修复(最小 diff,仅本文件):FULLSCREEN_TEXCOORDS 改为 4 对 [0,1, 1,1, 0,0, 1,0](BL(0,1) BR(1,1) TL(0,0) TR(1,0));FULLSCREEN_INDICES 改为 [0,1,3, 0,3,2]((BL,BR,TR)+(BL,TR,TL),铺满 [-1,1]²)。
+回归守卫:①单元测试断言三个常量的精确数组值(mock GL 的 bufferData 是空操作、drawElements 只计数,从不断言常量值,5 个测试全绿也拦不住);②check-shaders 闸新增真实绘制 + readPixels 采样 4 角+中心+右缘中点,对 demo.fx 断言四角色相、对 FALLBACK 断言中心与右缘中点非黑、对 fna 网格系断言中心非黑(其四角本身较暗,故只查中心),数据直接 import 运行时常量,保证测的是源码真实数据。
+参考对照:原站点 gh-tml 用单个全屏大三角形(drawArrays,无索引)天然铺满,因此旧站没有此 bug;本项目改 4 顶点索引四边形时拓扑与 UV 两处都写错。useWebGLMesh/fnaFixture 的 5×5 网格索引 (a,d,e)(a,e,b) 完整铺满,无此问题。
+
+### 验证记录 2026-08-21：修复 ShaderStage 着色器编译/链接失败 (HLSL 标量→向量广播)
+
+**级别**：L3 统一验收
+
+**命令与结果**：
+- `bun scripts/check-shaders.ts`：通过 (新增的真实 WebGL2 编译冒烟闸,5 个程序全部「编译 OK + LINK OK」——demo.fx 转译片段(从原项目迁移)、fna-vertex-demo.fx 转译片段、fnaFixture.FNA_FX_SOURCE 转译片段、FALLBACK_FRAGMENT、FALLBACK_VERTEX;headless Chrome 真实 `canvas.getContext('webgl2')` 编译链接)
+- `npx vitest run`：通过 (136/136 单元及集成测试套件全部 Green 通关,含新增的「FNA_FX_SOURCE 与静态素材 fna-vertex-demo.fx 正文一致」防双副本漂移测试)
+- `npx tsc --noEmit`：通过 (无任何 TypeScript 编译错误)
+- `bun scripts/build-content.ts`：通过 (成功输出 2 篇文章到 src/generated/blog-index.json)
+
+**备注**：
+博客文章 content/blog/content-pipeline.md 的 shader 渲染报错「着色器编译/链接失败: fragment 编译失败 | The program must contain objects to form both a vertex and fragment shader」,根因是 HLSL 源第 30 行 `float2 rnd = frac(sin(dot(...)) * 43758.5453);`:HLSL 的 `dot()` 返回标量并允许标量→向量广播,但 GLSL ES 3.00 的变量初始化禁止把标量赋给 `vec2`;词法级转译器 hlslToGLSL.ts 只做 `frac→fract`、`float2→vec2` 改名、不做类型推断,原样产出 `vec2 rnd = fract(标量);` 导致片段编译失败 → 链接失败。
+修复为把 `frac(...)` 包进显式构造器 `float2(...)`(HLSL 合法,转译后为 `vec2(fract(...))`),两处同源副本(fna-vertex-demo.fx 与 fnaFixture.ts 的 FNA_FX_SOURCE)同步修改。
+同时补上回归守卫 scripts/check-shaders.ts:单元测试里的 GL mock 从不真正编译 GLSL,135/135 全绿也可能带着该运行时 bug 上线;该闸用真实 WebGL2 编译链接全部 shader 素材,任一失败即 exit 1,并挂入 `npm run check:shaders`。
+另外按需求把博客 fx: 嵌入的 shader 素材改为**从原项目迁移的真实 .fx 文件**:content/blog/content-pipeline.md 的 `fx:demos/fna-vertex-demo.fx`(新写素材)改为 `fx:demos/demo.fx`,后者逐字取自原站点 gh-tml/site/content/如何贡献/shaders/demo.fx(原站点 fx: 协议的标准示例,片段入口 `float4 mainImage(float2 fragCoord)`);已实测经 hlslToGLSL 转译后在真实 WebGL2 编译链接通过。fna-vertex-demo.fx 与 FNA_FX_SOURCE 保留,供 FnaVertexDemo 组件使用。
+
 ### 验证记录 2025-02-18：修复 Vite 静态资源导入与 Glob 匹配警告 (Issue #20 & #21)
 
 **级别**：L3 统一验收

@@ -11,6 +11,7 @@
     "build:seo": "bun scripts/build-seo.ts",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
+    "check:shaders": "bun scripts/check-shaders.ts",
     "test": "vitest run"
   },
   "dependencies": {

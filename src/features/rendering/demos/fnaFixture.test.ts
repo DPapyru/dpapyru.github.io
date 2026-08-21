@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, test } from "vitest";
 import {
   FNA_GRID,
@@ -62,5 +64,18 @@ describe("fnaFixture — 顶点/几何测试夹具", () => {
     expect(result.source).toContain("#version 300 es");
     expect(result.source).toContain("iTime");
     expect(result.source).not.toContain("float2 uv"); // 类型已改写
+  });
+
+  test("FNA_FX_SOURCE 与静态素材 fna-vertex-demo.fx 正文一致(防双副本漂移)", () => {
+    // 两处同源副本:静态素材 .fx 文件与测试夹具常量。忽略各自不同的头部注释与
+    // 首尾空白后,正文必须逐字符一致;若任一侧改了着色器逻辑这里就会失败。
+    // 注意:vitest 转译后 import.meta.url 非 file: scheme,故用进程工作目录定位素材。
+    const fxBody = readFileSync(
+      join(process.cwd(), "src/assets/demos/fna-vertex-demo.fx"),
+      "utf8",
+    )
+      .replace(/^\s*\/\*[\s\S]*?\*\/\s*/, "")
+      .trim();
+    expect(FNA_FX_SOURCE.replace(/^\s*\/\*[\s\S]*?\*\/\s*/, "").trim()).toBe(fxBody);
   });
 });
