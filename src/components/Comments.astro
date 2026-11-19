@@ -2,8 +2,8 @@
 const GISCUS = {
   repo: 'DPapyru/dpapyru.github.io',
   repoId: 'R_kgDOV0RTog',
-  category: 'Announcements',
-  categoryId: 'DIC_kwDOV0RTos4DLflL',
+  category: 'General',
+  categoryId: 'DIC_kwDOV0RTos4DLflM',
 };
 
 const enabled = import.meta.env.PROD && GISCUS.repoId && GISCUS.categoryId;
@@ -21,8 +21,9 @@ const enabled = import.meta.env.PROD && GISCUS.repoId && GISCUS.categoryId;
       data-strict="0"
       data-reactions-enabled="1"
       data-emit-metadata="0"
-      data-input-position="top"
+      data-input-position="bottom"
       data-theme="preferred_color_scheme"
+      data-loading="lazy"
       data-lang="zh-CN"
       crossorigin="anonymous"
       async
