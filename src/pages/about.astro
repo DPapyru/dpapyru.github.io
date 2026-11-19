@@ -2,9 +2,14 @@
 import Base from '../layouts/Base.astro';
 ---
 <Base title="关于 · 星辰小天使">
-  <article>
-    <h1>关于</h1>
-    <p>我是 DPapyru，在这里写日记。</p>
-    <p><a href="https://github.com/DPapyru">GitHub</a></p>
+  <article class="about card">
+    <img class="about-avatar" src="/avatar.jpg" alt="" width="96" height="96" />
+    <div>
+      <h1>星辰小天使</h1>
+      <p>我是 DPapyru，在这里写日记。</p>
+      <p class="about-links">
+        <a href="https://github.com/DPapyru">GitHub</a><span>·</span><a href="/tutorials/">教程</a><span>·</span><a href="/rss.xml">RSS</a>
+      </p>
+    </div>
   </article>
 </Base>

@@ -1,0 +1,131 @@
+---
+import { getCollection, render } from 'astro:content';
+import Base from './Base.astro';
+
+interface Props {
+  entry: any;
+}
+
+const { entry } = Astro.props;
+const chapters = (await getCollection('tutorials')).sort((a, b) => a.data.order - b.data.order);
+const index = chapters.findIndex((chapter) => chapter.id === entry.id);
+const prev = chapters[index - 1];
+const next = chapters[index + 1];
+const { Content, headings } = await render(entry);
+const toc = headings.filter((heading) => heading.depth <= 3);
+
+const groups = [];
+for (const chapter of chapters) {
+  const name = chapter.data.group ?? '本教程';
+  let group = groups.find((item) => item.name === name);
+  if (!group) {
+    group = { name, items: [] };
+    groups.push(group);
+  }
+  group.items.push(chapter);
+}
+
+const feedback = (verdict) =>
+  'https://github.com/DPapyru/dpapyru.github.io/issues/new?title=' +
+  encodeURIComponent(`[反馈/${verdict}] ${entry.data.title}`) +
+  '&body=' +
+  encodeURIComponent(`页面：/tutorials/${entry.id}/` + '\n\n');
+---
+<Base title={`${entry.data.title} · 星辰小天使`} description={entry.data.description} wide>
+  <div class="docs">
+    <aside class="docs-nav">
+      <label class="docs-search">
+        <span class="docs-search-icon" aria-hidden="true">⌕</span>
+        <input type="search" placeholder="按标题查找" aria-label="按标题查找" />
+      </label>
+      <p class="docs-nav-title">C# 教程</p>
+      <nav class="docs-tree">
+        {groups.map((group) => (
+          <details class="docs-group" open={group.items.some((chapter) => chapter.id === entry.id)}>
+            <summary>{group.name}</summary>
+            <ol>
+              {group.items.map((chapter) => (
+                <li>
+                  <a href={`/tutorials/${chapter.id}/`} aria-current={chapter.id === entry.id ? 'page' : undefined}>
+                    {chapter.data.title}
+                  </a>
+                </li>
+              ))}
+            </ol>
+          </details>
+        ))}
+      </nav>
+      <button class="docs-print" type="button" onclick="window.print()">
+        <span aria-hidden="true">⤓</span> 下载 PDF
+      </button>
+    </aside>
+
+    <article class="docs-article">
+      <nav class="crumbs">
+        <a href="/">首页</a><span>›</span><a href="/tutorials/">教程</a><span>›</span><span>{entry.data.title}</span><span>›</span>
+      </nav>
+      <h1>{entry.data.title}</h1>
+      <p class="meta">{entry.data.description}</p>
+      <Content />
+      <nav class="pager">
+        {prev ? <a href={`/tutorials/${prev.id}/`}>← {prev.data.title}</a> : <span />}
+        {next ? <a href={`/tutorials/${next.id}/`}>{next.data.title} →</a> : <span />}
+      </nav>
+    </article>
+
+    {toc.length > 0 && (
+      <aside class="docs-toc">
+        <p class="docs-toc-title">本文内容</p>
+        <ul>
+          {toc.map((heading) => (
+            <li class={`d${heading.depth}`}><a href={`#${heading.slug}`}>{heading.text}</a></li>
+          ))}
+        </ul>
+        <div class="docs-help">
+          <p>此页面是否有帮助？</p>
+          <p class="docs-help-actions">
+            <a class="thumb" href={feedback('有帮助')} aria-label="有帮助">👍</a>
+            <a class="thumb" href={feedback('没帮助')} aria-label="没帮助">👎</a>
+          </p>
+        </div>
+      </aside>
+    )}
+  </div>
+  <script is:inline>
+    document.querySelectorAll('.docs-article h2, .docs-article h3').forEach((heading) => {
+      if (!heading.id) return;
+      const link = document.createElement('a');
+      link.className = 'anchor';
+      link.href = '#' + heading.id;
+      link.setAttribute('aria-label', '链接到此节');
+      link.textContent = '#';
+      heading.append(link);
+    });
+
+    const search = document.querySelector('.docs-search input');
+    search?.addEventListener('input', () => {
+      const query = search.value.trim().toLowerCase();
+      document.querySelectorAll('.docs-group').forEach((group) => {
+        let hits = 0;
+        group.querySelectorAll('li').forEach((item) => {
+          const hit = item.textContent.toLowerCase().includes(query);
+          item.hidden = !hit;
+          if (hit) hits += 1;
+        });
+        group.hidden = hits === 0;
+        if (query) group.open = true;
+      });
+    });
+
+    const links = [...document.querySelectorAll('.docs-toc ul a')];
+    const targets = links.map((link) => document.querySelector(link.getAttribute('href'))).filter(Boolean);
+    const activate = (id) => links.forEach((link) => link.classList.toggle('active', link.getAttribute('href') === '#' + id));
+    const sync = () => {
+      let current = targets[0]?.id;
+      for (const target of targets) if (target.getBoundingClientRect().top <= 120) current = target.id;
+      if (current) activate(current);
+    };
+    document.addEventListener('scroll', sync, { passive: true });
+    sync();
+  </script>
+</Base>
