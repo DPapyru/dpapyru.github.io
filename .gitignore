@@ -1,0 +1,5 @@
+node_modules/
+dist/
+.astro/
+.bun-cache/
+.DS_Store
