@@ -4,16 +4,39 @@ import Base from '../layouts/Base.astro';
 
 const posts = (await getCollection('posts', ({ data }) => (import.meta.env.PROD ? !data.draft : true)))
   .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+const chapters = await getCollection('tutorials');
 ---
 <Base>
+  <section class="hero">
+    <img class="hero-avatar" src="/avatar.jpg" alt="" width="88" height="88" />
+    <div>
+      <h1>星辰小天使</h1>
+      <p class="tagline">可能是笨猫在写日记。</p>
+      <p class="hero-links">
+        <a href="/tutorials/">教程</a><span>·</span><a href="https://github.com/DPapyru">GitHub</a><span>·</span><a href="/rss.xml">RSS</a>
+      </p>
+    </div>
+  </section>
+
+  <h2 class="section-title">文章<span class="count">{posts.length}</span></h2>
+
+  <a class="teaser" href="/tutorials/">
+    <span class="teaser-label">教程</span>
+    <span class="teaser-title">从零开始的 C#</span>
+    <span class="teaser-meta">{chapters.length} 章 <span aria-hidden="true">→</span></span>
+  </a>
+
   {posts.length === 0 ? (
     <p class="empty">还没有文章。</p>
   ) : (
-    <ul class="tree">
+    <ul class="post-list">
       {posts.map((post) => (
         <li>
-          <a href={`/posts/${post.id}/`}>{post.data.title}</a>
-          <time datetime={post.data.date.toISOString()}>{post.data.date.toISOString().slice(0, 10)}</time>
+          <a href={`/posts/${post.id}/`}>
+            <time datetime={post.data.date.toISOString()}>{post.data.date.toISOString().slice(0, 10)}</time>
+            <span class="post-title">{post.data.title}</span>
+            <span class="post-arrow" aria-hidden="true">→</span>
+          </a>
         </li>
       ))}
     </ul>

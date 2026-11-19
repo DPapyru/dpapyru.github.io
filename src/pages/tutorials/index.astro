@@ -1,0 +1,22 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+
+const chapters = (await getCollection('tutorials')).sort((a, b) => a.data.order - b.data.order);
+---
+<Base title="教程 · 星辰小天使" description="C# 教程">
+  <h1 class="page-title">教程</h1>
+  <p class="meta">从零开始的 C# 笔记，一章一章往下写。</p>
+
+  <ol class="chapter-grid">
+    {chapters.map((chapter, index) => (
+      <li>
+        <a class="chapter-card" href={`/tutorials/${chapter.id}/`}>
+          <span class="chapter-no">{String(index + 1).padStart(2, '0')}</span>
+          <span class="chapter-name">{chapter.data.title}</span>
+          {chapter.data.description && <span class="chapter-desc">{chapter.data.description}</span>}
+        </a>
+      </li>
+    ))}
+  </ol>
+</Base>
