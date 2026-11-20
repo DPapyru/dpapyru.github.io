@@ -7,7 +7,10 @@ interface Props {
 }
 
 const { entry } = Astro.props;
-const chapters = (await getCollection('tutorials')).sort((a, b) => a.data.order - b.data.order);
+const groupOf = (entry) => entry.id.split('/').slice(0, -1).join(' / ') || '本教程';
+const chapters = (await getCollection('posts', ({ data }) => (import.meta.env.PROD ? !data.draft : true))).sort(
+  (a, b) => (a.data.order ?? 0) - (b.data.order ?? 0),
+);
 const index = chapters.findIndex((chapter) => chapter.id === entry.id);
 const prev = chapters[index - 1];
 const next = chapters[index + 1];
@@ -16,7 +19,7 @@ const toc = headings.filter((heading) => heading.depth <= 3);
 
 const groups = [];
 for (const chapter of chapters) {
-  const name = chapter.data.group ?? '本教程';
+  const name = groupOf(chapter);
   let group = groups.find((item) => item.name === name);
   if (!group) {
     group = { name, items: [] };
@@ -65,7 +68,10 @@ const feedback = (verdict) =>
         <a href="/">首页</a><span>›</span><a href="/tutorials/">教程</a><span>›</span><span>{entry.data.title}</span><span>›</span>
       </nav>
       <h1>{entry.data.title}</h1>
-      <p class="meta">{entry.data.description}</p>
+      <p class="meta">
+        {entry.data.date && <time datetime={entry.data.date.toISOString()}>{entry.data.date.toISOString().slice(0, 10)} · </time>}
+        {entry.data.description}
+      </p>
       <Content />
       <nav class="pager">
         {prev ? <a href={`/tutorials/${prev.id}/`}>← {prev.data.title}</a> : <span />}
