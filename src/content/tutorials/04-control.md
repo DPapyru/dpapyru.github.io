@@ -1,6 +1,6 @@
 ---
 title: 控制流与模式匹配
-order: 4
+order: 2
 group: 语言基础
 description: if、switch 表达式、循环，以及一点点模式匹配
 ---

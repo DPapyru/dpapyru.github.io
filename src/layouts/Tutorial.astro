@@ -81,13 +81,6 @@ const feedback = (verdict) =>
             <li class={`d${heading.depth}`}><a href={`#${heading.slug}`}>{heading.text}</a></li>
           ))}
         </ul>
-        <div class="docs-help">
-          <p>此页面是否有帮助？</p>
-          <p class="docs-help-actions">
-            <a class="thumb" href={feedback('有帮助')} aria-label="有帮助">👍</a>
-            <a class="thumb" href={feedback('没帮助')} aria-label="没帮助">👎</a>
-          </p>
-        </div>
       </aside>
     )}
   </div>
