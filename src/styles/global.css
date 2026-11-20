@@ -51,11 +51,16 @@ footer.site {
 }
 
 header.site.wide {
-  max-width: 1280px;
+  max-width: none;
 }
 
 main.wide {
-  max-width: 1280px;
+  max-width: none;
+}
+
+body.wide {
+  padding-left: 0;
+  padding-right: 0;
 }
 
 header.site {
@@ -665,7 +670,7 @@ footer.site {
 
 .docs-article {
   min-width: 0;
-  max-width: 74ch;
+  max-width: none;
   font-size: 15.5px;
 }
 
@@ -742,6 +747,12 @@ article .anchor:focus-visible {
 
 .docs-article .meta {
   margin: 0 0 1.9rem;
+}
+
+.docs-article .mermaid {
+  margin: 0;
+  overflow-x: auto;
+  text-align: center;
 }
 
 .docs-toc {

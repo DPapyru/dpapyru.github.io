@@ -1,6 +1,7 @@
 ---
 import { getCollection, render } from 'astro:content';
 import Base from './Base.astro';
+import Comments from '../components/Comments.astro';
 
 interface Props {
   entry: any;
@@ -77,6 +78,7 @@ const feedback = (verdict) =>
         {prev ? <a href={`/tutorials/${prev.id}/`}>← {prev.data.title}</a> : <span />}
         {next ? <a href={`/tutorials/${next.id}/`}>{next.data.title} →</a> : <span />}
       </nav>
+      <Comments />
     </article>
 
     {toc.length > 0 && (

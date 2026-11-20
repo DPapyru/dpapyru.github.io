@@ -11,6 +11,8 @@
     "@astrojs/markdown-remark": "^7.3.10",
     "@astrojs/rss": "^4.0.19",
     "@fontsource/jetbrains-mono": "^5.3.0",
-    "astro": "^7.4.13"
+    "astro": "^7.4.13",
+    "astro-mermaid": "^2.2.0",
+    "mermaid": "^12.3.0"
   }
 }
