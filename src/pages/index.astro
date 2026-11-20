@@ -2,9 +2,10 @@
 import { getCollection } from 'astro:content';
 import Base from '../layouts/Base.astro';
 
-const posts = (await getCollection('posts', ({ data }) => (import.meta.env.PROD ? !data.draft : true)))
-  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
-const chapters = await getCollection('tutorials');
+const posts = (await getCollection('posts', ({ data }) => Boolean(data.date) && (import.meta.env.PROD ? !data.draft : true))).sort(
+  (a, b) => (b.data.date?.valueOf() ?? 0) - (a.data.date?.valueOf() ?? 0),
+);
+const chapters = await getCollection('posts', ({ data }) => (import.meta.env.PROD ? !data.draft : true));
 ---
 <Base>
   <section class="hero">
@@ -32,7 +33,7 @@ const chapters = await getCollection('tutorials');
     <ul class="post-list">
       {posts.map((post) => (
         <li>
-          <a href={`/posts/${post.id}/`}>
+          <a href={`/tutorials/${post.id}/`}>
             <time datetime={post.data.date.toISOString()}>{post.data.date.toISOString().slice(0, 10)}</time>
             <span class="post-title">{post.data.title}</span>
             <span class="post-arrow" aria-hidden="true">→</span>

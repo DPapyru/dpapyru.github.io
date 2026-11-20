@@ -2,7 +2,7 @@ import rss from '@astrojs/rss';
 import { getCollection } from 'astro:content';
 
 export async function GET(context) {
-  const posts = await getCollection('posts', ({ data }) => (import.meta.env.PROD ? !data.draft : true));
+  const posts = await getCollection('posts', ({ data }) => Boolean(data.date) && (import.meta.env.PROD ? !data.draft : true));
 
   return rss({
     title: '星辰小天使',
@@ -12,7 +12,7 @@ export async function GET(context) {
       title: post.data.title,
       description: post.data.description,
       pubDate: post.data.date,
-      link: `/posts/${post.id}/`,
+      link: `/tutorials/${post.id}/`,
     })),
   });
 }
